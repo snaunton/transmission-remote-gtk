@@ -34,7 +34,7 @@
  */
 
 G_DEFINE_TYPE(TrgPersistentTreeView, trg_persistent_tree_view,
-              GTK_TYPE_VBOX)
+              GTK_TYPE_GRID) //GTK_TYPE_VBOX)
 #define GET_PRIVATE(o) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((o), TRG_TYPE_PERSISTENT_TREE_VIEW, TrgPersistentTreeViewPrivate))
 typedef struct _TrgPersistentTreeViewPrivate
@@ -377,7 +377,7 @@ static GObject *trg_persistent_tree_view_constructor(GType type,
 {
     GObject *object;
     TrgPersistentTreeViewPrivate *priv;
-    GtkWidget *hbox, *w;
+    GtkWidget *w;
 
     object = G_OBJECT_CLASS
         (trg_persistent_tree_view_parent_class)->constructor(type,
@@ -385,38 +385,44 @@ static GObject *trg_persistent_tree_view_constructor(GType type,
                                                              construct_params);
     priv = GET_PRIVATE(object);
 
-    hbox = trg_hbox_new(FALSE, 0);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing (GTK_GRID(grid), 4);
 
-    w = gtk_button_new_from_stock(GTK_STOCK_ADD);
+    w = gtk_button_new_from_icon_name("list-add", GTK_ICON_SIZE_BUTTON);
     g_signal_connect(w, "clicked",
                      G_CALLBACK(trg_persistent_tree_view_add_cb), object);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 4);
+    gtk_grid_attach (GTK_GRID(grid), w, 0, 0, 1, 1);
 
-    w = priv->delButton = gtk_button_new_from_stock(GTK_STOCK_DELETE);
+    w = priv->delButton = gtk_button_new_from_icon_name("edit-delete", GTK_ICON_SIZE_BUTTON);
     gtk_widget_set_sensitive(w, FALSE);
     g_signal_connect(w, "clicked",
                      G_CALLBACK(trg_persistent_tree_view_del_cb), object);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 4);
+    gtk_grid_attach (GTK_GRID(grid), w, 1, 0, 1, 1);
 
-    w = priv->upButton = gtk_button_new_from_stock(GTK_STOCK_GO_UP);
+    w = priv->upButton = gtk_button_new_from_icon_name("go-up", GTK_ICON_SIZE_BUTTON);
     gtk_widget_set_sensitive(w, FALSE);
     g_signal_connect(w, "clicked",
                      G_CALLBACK(trg_persistent_tree_view_up_cb), object);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 4);
+    gtk_grid_attach (GTK_GRID(grid), w, 2, 0, 1, 1);
 
-    w = priv->downButton = gtk_button_new_from_stock(GTK_STOCK_GO_DOWN);
+    w = priv->downButton = gtk_button_new_from_icon_name("go-down", GTK_ICON_SIZE_BUTTON);
     gtk_widget_set_sensitive(w, FALSE);
     g_signal_connect(w, "clicked",
                      G_CALLBACK(trg_persistent_tree_view_down_cb), object);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 4);
+    gtk_grid_attach (GTK_GRID(grid), w, 3, 0, 1, 1);
 
     priv->tv =
         trg_persistent_tree_view_tree_view_new(TRG_PERSISTENT_TREE_VIEW
                                                (object), priv->model);
-    gtk_box_pack_start(GTK_BOX(object),
-                       my_scrolledwin_new(GTK_WIDGET(priv->tv)), TRUE,
-                       TRUE, 4);
-    gtk_box_pack_start(GTK_BOX(object), hbox, FALSE, FALSE, 4);
+
+    GtkWidget *sw = my_scrolledwin_new(GTK_WIDGET(priv->tv));
+    gtk_widget_set_hexpand (sw, TRUE);
+    gtk_widget_set_vexpand (sw, TRUE);
+    gtk_grid_attach(GTK_GRID(object), sw, 0, 0, 1, 1);
+
+    gtk_grid_attach(GTK_GRID(object), grid, 0, 1, 1, 1);
+
+    gtk_grid_set_row_spacing (GTK_GRID(object), 4);
 
     priv->wd = trg_pref_widget_desc_new(GTK_WIDGET(priv->tv), priv->key,
                                         priv->conf_flags);

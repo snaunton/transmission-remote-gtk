@@ -17,6 +17,8 @@
 #include <gtk/gtk.h>
 #include "hig.h"
 
+#include <glib/gprintf.h>
+
 GtkWidget*
 hig_workarea_create (void)
 {
@@ -30,32 +32,27 @@ hig_workarea_create (void)
 }
 
 void
-hig_workarea_add_section_divider (GtkWidget * t, guint * row)
-{
-    GtkWidget * w = gtk_alignment_new (0.0f, 0.0f, 0.0f, 0.0f);
-
-    gtk_widget_set_size_request (w, 0u, 6u);
-    gtk_grid_attach (GTK_GRID (t), w, 0, *row, 2, 1);
-    ++ * row;
-}
-
-void
 hig_workarea_add_section_title_widget (GtkWidget * t, guint * row, GtkWidget * w)
 {
     gtk_widget_set_hexpand (w, TRUE);
     gtk_grid_attach (GTK_GRID (t), w, 0, *row, 2, 1);
+    /*
+     * Add a top margin for all section titles unless it is first row
+     * Replaces hig_workarea_add_section_divider
+     */
+    if (*row > 0)
+        gtk_widget_set_margin_top(w, 12);
     ++ * row;
 }
 
 void
-hig_workarea_add_section_title (GtkWidget *  t, guint * row, const char * section_title)
+hig_workarea_add_section_title (GtkWidget *  t, guint * row, const gchar * section_title)
 {
-    char buf[512];
-    GtkWidget * l;
-
-    g_snprintf (buf, sizeof (buf), "<b>%s</b>", section_title);
-    l = gtk_label_new (buf);
-    gtk_misc_set_alignment (GTK_MISC (l), 0.0f, 0.5f);
+    gchar *str = g_strdup_printf ("<b>%s</b>", section_title);
+    GtkWidget *l = gtk_label_new (str);
+    g_free(str);
+    gtk_widget_set_valign (l, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign (l, GTK_ALIGN_START);
     gtk_label_set_use_markup (GTK_LABEL (l), TRUE);
     hig_workarea_add_section_title_widget (t, row, l);
 }
@@ -64,7 +61,7 @@ void
 hig_workarea_add_wide_control (GtkWidget * t, guint * row, GtkWidget * w)
 {
     gtk_widget_set_hexpand (w, TRUE);
-    gtk_widget_set_margin_left (w, 18);
+    gtk_widget_set_margin_start (w, 18);
     gtk_grid_attach (GTK_GRID (t), w, 0, *row, 2, 1);
     ++ * row;
 }
@@ -79,7 +76,7 @@ hig_workarea_add_wide_tall_control (GtkWidget * t, guint * row, GtkWidget * w)
 GtkWidget *
 hig_workarea_add_wide_checkbutton (GtkWidget  * t,
                                    guint      * row,
-                                   const char * mnemonic_string,
+                                   const gchar * mnemonic_string,
                                    gboolean     is_active)
 {
     GtkWidget * w = gtk_check_button_new_with_mnemonic (mnemonic_string);
@@ -92,9 +89,9 @@ hig_workarea_add_wide_checkbutton (GtkWidget  * t,
 void
 hig_workarea_add_label_w (GtkWidget * t, guint row, GtkWidget * w)
 {
-    gtk_widget_set_margin_left (w, 18);
-    if (GTK_IS_MISC (w))
-        gtk_misc_set_alignment (GTK_MISC (w), 0.0f, 0.5f);
+    gtk_widget_set_margin_start (w, 18);
+    gtk_widget_set_valign (w, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign (w, GTK_ALIGN_START);
     if (GTK_IS_LABEL (w))
         gtk_label_set_use_markup (GTK_LABEL (w), TRUE);
     gtk_grid_attach (GTK_GRID (t), w, 0, row, 1, 1);
@@ -103,8 +100,8 @@ hig_workarea_add_label_w (GtkWidget * t, guint row, GtkWidget * w)
 static void
 hig_workarea_add_tall_control (GtkWidget * t, guint row, GtkWidget * control)
 {
-    if (GTK_IS_MISC (control))
-        gtk_misc_set_alignment (GTK_MISC (control), 0.0f, 0.5f);
+    gtk_widget_set_valign (control, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign (control, GTK_ALIGN_START);
 
     g_object_set (control, "expand", TRUE, NULL);
     gtk_grid_attach (GTK_GRID (t), control, 1, row, 1, 1);
@@ -113,9 +110,8 @@ hig_workarea_add_tall_control (GtkWidget * t, guint row, GtkWidget * control)
 static void
 hig_workarea_add_control (GtkWidget * t, guint row, GtkWidget * control)
 {
-    if (GTK_IS_MISC (control))
-        gtk_misc_set_alignment (GTK_MISC (control), 0.0f, 0.5f);
-
+    gtk_widget_set_valign (control, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign (control, GTK_ALIGN_START);
     gtk_widget_set_hexpand (control, TRUE);
     gtk_grid_attach (GTK_GRID (t), control, 1, row, 1, 1);
 }

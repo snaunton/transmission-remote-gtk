@@ -123,11 +123,12 @@ static GObject *trg_torrent_move_dialog_constructor(GType type,
 
     gtk_window_set_destroy_with_parent(GTK_WINDOW(object), TRUE);
 
-    gtk_dialog_add_button(GTK_DIALOG(object), GTK_STOCK_CLOSE,
-                          GTK_RESPONSE_CANCEL);
     priv->move_button =
         gtk_dialog_add_button(GTK_DIALOG(object), _("Move"),
                               GTK_RESPONSE_ACCEPT);
+
+    gtk_dialog_add_button(GTK_DIALOG(object), _("_Close"),
+                          GTK_RESPONSE_CANCEL);
 
     gtk_widget_set_sensitive(priv->move_button,
                              trg_destination_combo_has_text
@@ -138,10 +139,6 @@ static GObject *trg_torrent_move_dialog_constructor(GType type,
 
     gtk_dialog_set_default_response(GTK_DIALOG(object),
                                     GTK_RESPONSE_ACCEPT);
-
-    gtk_dialog_set_alternative_button_order(GTK_DIALOG(object),
-                                            GTK_RESPONSE_ACCEPT,
-                                            GTK_RESPONSE_CANCEL, -1);
 
     gtk_container_set_border_width(GTK_CONTAINER(t), GUI_PAD);
 

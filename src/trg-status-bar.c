@@ -45,7 +45,7 @@
  * main window, which calls this. Session updates happen every 10 torrent-get updates.
  */
 
-G_DEFINE_TYPE(TrgStatusBar, trg_status_bar, GTK_TYPE_HBOX)
+G_DEFINE_TYPE(TrgStatusBar, trg_status_bar, GTK_TYPE_GRID)
 #define TRG_STATUS_BAR_GET_PRIVATE(o) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((o), TRG_TYPE_STATUS_BAR, TrgStatusBarPrivate))
 typedef struct _TrgStatusBarPrivate TrgStatusBarPrivate;
@@ -85,17 +85,20 @@ turtle_toggle(GtkWidget * w, GdkEventButton * event, gpointer data)
     TrgStatusBarPrivate *priv = TRG_STATUS_BAR_GET_PRIVATE(data);
     JsonNode *req = session_set();
     JsonObject *args = node_get_arguments(req);
-    gchar *stockName;
-    gboolean altSpeedOn;
+    const gchar *icon_name;
 
-    gtk_image_get_stock(GTK_IMAGE(priv->turtleImage), &stockName, NULL);
-    altSpeedOn = g_strcmp0(stockName, "alt-speed-on") == 0;
+    gtk_image_get_icon_name (GTK_IMAGE(priv->turtleImage),
+                             &icon_name, NULL);
 
-    gtk_image_set_from_stock(GTK_IMAGE(priv->turtleImage),
-                             altSpeedOn ? "alt-speed-off" : "alt-speed-on",
-                             GTK_ICON_SIZE_SMALL_TOOLBAR);
+    gboolean alt_speed_on = g_strcmp0(icon_name, "alt-speed-on") == 0;
+
+    gtk_image_set_from_icon_name(GTK_IMAGE(priv->turtleImage),
+                                 alt_speed_on ? "alt-speed-off" : "alt-speed-on",
+                                 GTK_ICON_SIZE_SMALL_TOOLBAR);
+
+
     json_object_set_boolean_member(args, SGET_ALT_SPEED_ENABLED,
-                                   !altSpeedOn);
+                                   !alt_speed_on);
 
     dispatch_async(priv->client, req, on_session_set, priv->win);
 }
@@ -106,7 +109,8 @@ static void trg_status_bar_init(TrgStatusBar * self)
     gtk_container_set_border_width(GTK_CONTAINER(self), 2);
 
     priv->info_lbl = gtk_label_new(_("Disconnected"));
-    gtk_box_pack_start(GTK_BOX(self), priv->info_lbl, FALSE, TRUE, 0);
+    //gtk_box_pack_start(GTK_BOX(self), priv->info_lbl, FALSE, TRUE, 0);
+    gtk_grid_attach(GTK_GRID(self), priv->info_lbl, 0, 0, 1, 1);
 
     priv->turtleImage = gtk_image_new();
 
@@ -116,13 +120,17 @@ static void trg_status_bar_init(TrgStatusBar * self)
     gtk_widget_set_visible(priv->turtleEventBox, FALSE);
     gtk_container_add(GTK_CONTAINER(priv->turtleEventBox),
                       priv->turtleImage);
-    gtk_box_pack_end(GTK_BOX(self), priv->turtleEventBox, FALSE, TRUE, 5);
+    //gtk_box_pack_end(GTK_BOX(self), priv->turtleEventBox, FALSE, TRUE, 5);
+    gtk_grid_attach(GTK_GRID(self), priv->turtleEventBox, 3, 0, 1, 1);
+    gtk_widget_set_halign (priv->turtleEventBox, GTK_ALIGN_END);
 
     priv->speed_lbl = gtk_label_new(NULL);
-    gtk_box_pack_end(GTK_BOX(self), priv->speed_lbl, FALSE, TRUE, 10);
+    //gtk_box_pack_end(GTK_BOX(self), priv->speed_lbl, FALSE, TRUE, 10);
+    gtk_grid_attach(GTK_GRID(self), priv->speed_lbl, 2, 0, 1, 1);
 
     priv->free_lbl = gtk_label_new(NULL);
-    gtk_box_pack_end(GTK_BOX(self), priv->free_lbl, FALSE, TRUE, 30);
+    //gtk_box_pack_end(GTK_BOX(self), priv->free_lbl, FALSE, TRUE, 30);
+    gtk_grid_attach(GTK_GRID(self), priv->free_lbl, 1, 0, 1, 1);
 }
 
 void
@@ -167,7 +175,7 @@ void trg_status_bar_session_update(TrgStatusBar * sb, JsonObject * session)
 {
     TrgStatusBarPrivate *priv = TRG_STATUS_BAR_GET_PRIVATE(sb);
     gint64 free = session_get_download_dir_free_space(session);
-    gboolean altSpeedEnabled = session_get_alt_speed_enabled(session);
+    gboolean alt_speed_on = session_get_alt_speed_enabled(session);
     gchar freeSpace[64];
 
     if (free >= 0) {
@@ -180,13 +188,15 @@ void trg_status_bar_session_update(TrgStatusBar * sb, JsonObject * session)
         gtk_label_set_text(GTK_LABEL(priv->free_lbl), "");
     }
 
-    gtk_image_set_from_stock(GTK_IMAGE(priv->turtleImage),
-                             altSpeedEnabled ? "alt-speed-on" :
-                             "alt-speed-off", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    gtk_image_set_from_icon_name(GTK_IMAGE(priv->turtleImage),
+                                 alt_speed_on ? "alt-speed-on" : "alt-speed-off",
+                                 GTK_ICON_SIZE_SMALL_TOOLBAR);
+
     gtk_widget_set_tooltip_text(priv->turtleImage,
-                                altSpeedEnabled ?
-                                _("Disable alternate speed limits") :
-                                _("Enable alternate speed limits"));
+                                alt_speed_on ?
+                                    _("Disable alternate speed limits") :
+                                    _("Enable alternate speed limits"));
+
     gtk_widget_set_visible(priv->turtleEventBox, TRUE);
 }
 

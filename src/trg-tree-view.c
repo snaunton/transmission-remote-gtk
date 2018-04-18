@@ -366,10 +366,12 @@ view_popup_menu(GtkButton * button, GdkEventButton * event,
     gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), menuitem);
 
     gtk_widget_show_all(menu);
-
+/*
     gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
                    (event != NULL) ? event->button : 0,
                    gdk_event_get_time((GdkEvent *) event));
+*/
+    gtk_menu_popup_at_pointer(GTK_MENU(menu), NULL);
 }
 
 /* This used to get the column as an argument binded when the signal was
@@ -819,7 +821,7 @@ static void trg_tree_view_init(TrgTreeView * tv)
 {
     gtk_tree_view_set_rubber_banding(GTK_TREE_VIEW(tv), TRUE);
     gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(tv), TRUE);
-    gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tv), TRUE);
+    //gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tv), TRUE);
     gtk_tree_selection_set_mode(gtk_tree_view_get_selection
                                 (GTK_TREE_VIEW(tv)),
                                 GTK_SELECTION_MULTIPLE);

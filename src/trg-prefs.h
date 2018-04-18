@@ -23,7 +23,7 @@
 #include <glib-object.h>
 #include <json-glib/json-glib.h>
 
-#define TRG_PREFS_FILENAME          "config.json"
+#define TRG_PREFS_FILENAME          "xconfig.json"
 #define TRG_PREFS_DEFAULT_DIR_MODE  448
 #define TRG_PORT_DEFAULT            9091
 #define TRG_INTERVAL_DEFAULT        3

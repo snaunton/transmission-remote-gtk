@@ -285,16 +285,13 @@ view_popup_menu_add_only(GtkWidget * treeview, GdkEventButton * event,
     menu = gtk_menu_new();
 
     menuitem =
-        trg_menu_bar_item_new(GTK_MENU_SHELL(menu), _("Add"),
-                              GTK_STOCK_ADD, TRUE);
+        trg_menu_bar_item_new(GTK_MENU_SHELL(menu), _("Add"), TRUE);
     g_signal_connect(menuitem, "activate", G_CALLBACK(add_tracker),
                      treeview);
 
     gtk_widget_show_all(menu);
 
-    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
-                   (event != NULL) ? event->button : 0,
-                   gdk_event_get_time((GdkEvent *) event));
+    gtk_menu_popup_at_pointer (GTK_MENU(menu), NULL);
 }
 
 static void
@@ -306,22 +303,18 @@ view_popup_menu(GtkWidget * treeview, GdkEventButton * event,
     menu = gtk_menu_new();
 
     menuitem =
-        trg_menu_bar_item_new(GTK_MENU_SHELL(menu), _("Delete"),
-                              GTK_STOCK_DELETE, TRUE);
+        trg_menu_bar_item_new(GTK_MENU_SHELL(menu), _("Delete"), TRUE);
     g_signal_connect(menuitem, "activate", G_CALLBACK(delete_tracker),
                      treeview);
 
     menuitem =
-        trg_menu_bar_item_new(GTK_MENU_SHELL(menu), _("Add"),
-                              GTK_STOCK_ADD, TRUE);
+        trg_menu_bar_item_new(GTK_MENU_SHELL(menu), _("Add"), TRUE);
     g_signal_connect(menuitem, "activate", G_CALLBACK(add_tracker),
                      treeview);
 
     gtk_widget_show_all(menu);
 
-    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
-                   (event != NULL) ? event->button : 0,
-                   gdk_event_get_time((GdkEvent *) event));
+    gtk_menu_popup_at_pointer(GTK_MENU(menu), NULL);
 }
 
 static gboolean

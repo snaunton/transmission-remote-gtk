@@ -347,6 +347,7 @@ static void toggle_graph(GtkToggleButton * w, gpointer win)
 }
 #endif
 
+#ifdef HAVE_SYSTEM_TRAY
 static void toggle_tray_icon(GtkToggleButton * w, gpointer win)
 {
     if (gtk_toggle_button_get_active(w))
@@ -354,6 +355,7 @@ static void toggle_tray_icon(GtkToggleButton * w, gpointer win)
     else
         trg_main_window_remove_status_icon(TRG_MAIN_WINDOW(win));
 }
+#endif
 
 static void menu_bar_toggle_filter_dirs(GtkToggleButton * w, gpointer win)
 {
@@ -706,10 +708,8 @@ static GtkWidget *trg_prefs_viewPage(TrgPreferencesDialog * dlg)
     TrgPreferencesDialogPrivate *priv =
         TRG_PREFERENCES_DIALOG_GET_PRIVATE(dlg);
 
-    GtkWidget *w, *dep, *t, *tray;
+    GtkWidget *w, *dep, *t;
     guint row = 0;
-    gboolean _is_unity = is_unity();
-    gchar *tray_label;
 
     t = hig_workarea_create();
 
@@ -758,21 +758,26 @@ static GtkWidget *trg_prefs_viewPage(TrgPreferencesDialog * dlg)
     hig_workarea_add_wide_control(t, &row, w);
 #endif
 
+#ifdef HAVE_SYSTEM_TRAY
 	hig_workarea_add_section_title(t, &row, _("System Tray"));
 
-	if (_is_unity) {
+    gchar *tray_label;
+
+	if (is_unity()) {
 		tray_label = _("Show in system tray (needs whitelisting in unity)");
 	} else {
 		tray_label = _("Show in system tray");
 	}
 
-	tray = trgp_check_new(dlg, tray_label,
-	TRG_PREFS_KEY_SYSTEM_TRAY, TRG_PREFS_GLOBAL,
-	NULL);
+	GtkWidget *tray = trgp_check_new(dlg, tray_label,
+	                                 TRG_PREFS_KEY_SYSTEM_TRAY,
+                                     TRG_PREFS_GLOBAL,
+	                                 NULL);
+
 	g_signal_connect(G_OBJECT(tray), "toggled", G_CALLBACK(toggle_tray_icon),
 			priv->win);
 	hig_workarea_add_wide_control(t, &row, tray);
-
+#ifdef ENABLE_STATUS_ICON
 	w = trgp_check_new(dlg, _("Minimise to system tray"),
 	TRG_PREFS_KEY_SYSTEM_TRAY_MINIMISE,
 	TRG_PREFS_GLOBAL, NULL);
@@ -781,8 +786,9 @@ static GtkWidget *trg_prefs_viewPage(TrgPreferencesDialog * dlg)
 	g_signal_connect(G_OBJECT(tray), "toggled",
 			G_CALLBACK(toggle_active_arg_is_sensitive), w);
 	hig_workarea_add_wide_control(t, &row, w);
+#endif /* ENABLE_STATUS_ICON */
+#endif /* HAVE_SYSTEM_TRAY */
 
-#ifdef HAVE_LIBNOTIFY
     hig_workarea_add_section_title(t, &row, _("Notifications"));
 
     w = trgp_check_new(dlg, _("Torrent added notifications"),
@@ -793,7 +799,6 @@ static GtkWidget *trg_prefs_viewPage(TrgPreferencesDialog * dlg)
                        TRG_PREFS_KEY_COMPLETE_NOTIFY, TRG_PREFS_GLOBAL,
                        NULL);
     hig_workarea_add_wide_control(t, &row, w);
-#endif
 
     return t;
 }
@@ -805,7 +810,6 @@ static GtkWidget *trg_prefs_serverPage(TrgPreferencesDialog * dlg)
     TrgPrefs *prefs = priv->prefs;
 
     GtkWidget *w, *t, *frame, *frameHbox, *profileLabel;
-    GtkWidget *profileButtonsHbox;
     guint row = 0;
 
     t = hig_workarea_create();
@@ -818,18 +822,24 @@ static GtkWidget *trg_prefs_serverPage(TrgPreferencesDialog * dlg)
     priv->profileComboBox = trg_prefs_profile_combo_new(priv->client);
     profileLabel = gtk_label_new(_("Profile: "));
 
-    profileButtonsHbox = trg_hbox_new(FALSE, 0);
-    w = gtk_button_new_from_stock(GTK_STOCK_NEW);
+    GtkWidget *button_grid = gtk_grid_new();
+    gtk_grid_set_column_homogeneous (GTK_GRID(button_grid),TRUE);
+    gtk_grid_set_column_spacing (GTK_GRID(button_grid), 4);
+    gtk_widget_set_halign(button_grid, GTK_ALIGN_START);
+
+    w = gtk_button_new_with_mnemonic (_("_New"));
+    gtk_widget_set_halign(w, GTK_ALIGN_FILL);
     g_signal_connect(w, "clicked", G_CALLBACK(add_profile_cb),
                      priv->profileComboBox);
-    gtk_box_pack_start(GTK_BOX(profileButtonsHbox), w, FALSE, FALSE, 4);
 
-    priv->profileDelButton = gtk_button_new_from_stock(GTK_STOCK_DELETE);
+    gtk_grid_attach(GTK_GRID(button_grid), w, 0, 0, 1, 1);
+
+    priv->profileDelButton = gtk_button_new_with_mnemonic (_("_Delete"));
     g_signal_connect(priv->profileDelButton, "clicked",
                      G_CALLBACK(del_profile_cb), priv->profileComboBox);
     gtk_widget_set_sensitive(priv->profileDelButton, FALSE);
-    gtk_box_pack_start(GTK_BOX(profileButtonsHbox), priv->profileDelButton,
-                       FALSE, FALSE, 4);
+    gtk_widget_set_halign(priv->profileDelButton, GTK_ALIGN_FILL);
+    gtk_grid_attach(GTK_GRID(button_grid), priv->profileDelButton, 1, 0, 1, 1);
 
     trg_prefs_profile_combo_populate(dlg,
                                      GTK_COMBO_BOX(priv->profileComboBox),
@@ -845,7 +855,7 @@ static GtkWidget *trg_prefs_serverPage(TrgPreferencesDialog * dlg)
     hig_workarea_add_row(t, &row, _("Name:"), priv->profileNameEntry,
                          NULL);
 
-    hig_workarea_add_wide_control(t, &row, profileButtonsHbox);
+    hig_workarea_add_wide_control(t, &row, button_grid); //profileButtonsHbox);
 
     hig_workarea_add_section_title(t, &row, _("Connection"));
 
@@ -908,7 +918,7 @@ static GObject *trg_preferences_dialog_constructor(GType type,
 {
     GObject *object;
     TrgPreferencesDialogPrivate *priv;
-    GtkWidget *notebook, *contentvbox;
+    GtkWidget *notebook;
 
     object = G_OBJECT_CLASS
         (trg_preferences_dialog_parent_class)->constructor(type,
@@ -916,15 +926,16 @@ static GObject *trg_preferences_dialog_constructor(GType type,
                                                            construct_params);
     priv = TRG_PREFERENCES_DIALOG_GET_PRIVATE(object);
 
-    contentvbox = gtk_dialog_get_content_area(GTK_DIALOG(object));
+    GtkWidget *contentbox = gtk_dialog_get_content_area(GTK_DIALOG(object));
 
     gtk_window_set_transient_for(GTK_WINDOW(object),
                                  GTK_WINDOW(priv->win));
     gtk_window_set_destroy_with_parent(GTK_WINDOW(object), TRUE);
-    gtk_dialog_add_button(GTK_DIALOG(object), GTK_STOCK_CLOSE,
-                          GTK_RESPONSE_CLOSE);
-    gtk_dialog_add_button(GTK_DIALOG(object), GTK_STOCK_OK,
-                          GTK_RESPONSE_OK);
+
+    gtk_dialog_add_buttons (GTK_DIALOG(object),
+                            _("_OK"), GTK_RESPONSE_OK,
+                            _("_Close"), GTK_RESPONSE_CLOSE,
+                            NULL);
 
     gtk_dialog_set_default_response(GTK_DIALOG(object), GTK_RESPONSE_OK);
 
@@ -970,7 +981,7 @@ static GObject *trg_preferences_dialog_constructor(GType type,
 
     gtk_container_set_border_width(GTK_CONTAINER(notebook), GUI_PAD);
 
-    gtk_box_pack_start(GTK_BOX(contentvbox), notebook, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(contentbox), notebook, TRUE, TRUE, 0);
 
     return object;
 }

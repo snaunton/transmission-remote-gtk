@@ -243,10 +243,13 @@ static GtkWidget *info_page_new(TrgTorrentPropsDialog * dialog)
     /* error */
     l = g_object_new(GTK_TYPE_LABEL, "selectable", TRUE, "ellipsize",
                      PANGO_ELLIPSIZE_END, NULL);
+
     hig_workarea_add_row(t, &row, _("Error:"), l, NULL);
+
     priv->error_lb = l;
 
-    hig_workarea_add_section_divider(t, &row);
+    //hig_workarea_add_section_divider(t, &row);
+
     hig_workarea_add_section_title(t, &row, _("Details"));
 
     /* destination */
@@ -288,9 +291,11 @@ static GtkWidget *info_page_new(TrgTorrentPropsDialog * dialog)
     gtk_frame_set_shadow_type(GTK_FRAME(fr), GTK_SHADOW_IN);
     gtk_container_add(GTK_CONTAINER(fr), sw);
     w = hig_workarea_add_tall_row(t, &row, _("Comment:"), fr, NULL);
-    gtk_misc_set_alignment(GTK_MISC(w), 0.0f, 0.0f);
+    gtk_widget_set_halign (w, GTK_ALIGN_START);
+    gtk_widget_set_valign (w, GTK_ALIGN_START);
 
-    hig_workarea_add_section_divider(t, &row);
+    //hig_workarea_add_section_divider(t, &row);
+
     return t;
 }
 
@@ -516,7 +521,6 @@ static GObject *trg_torrent_props_dialog_constructor(GType type,
     TrgTorrentPropsDialog *propsDialog = TRG_TORRENT_PROPS_DIALOG(object);
     GtkWindow *window = GTK_WINDOW(object);
     TrgTorrentPropsDialogPrivate *priv = GET_PRIVATE(object);
-
     GtkTreeSelection *selection =
         gtk_tree_view_get_selection(GTK_TREE_VIEW(priv->tv));
     gint rowCount = gtk_tree_selection_count_selected_rows(selection);
@@ -524,12 +528,11 @@ static GObject *trg_torrent_props_dialog_constructor(GType type,
     priv->show_details = trg_prefs_get_int(prefs, TRG_PREFS_KEY_STYLE,
                                            TRG_PREFS_GLOBAL) !=
         TRG_STYLE_CLASSIC && rowCount == 1;
-
     gint64 width, height;
 
     JsonObject *json;
     GtkTreeIter iter;
-    GtkWidget *notebook, *contentvbox;
+    GtkWidget *notebook;
 
     get_torrent_data(trg_client_get_torrent_table(priv->client),
                      trg_mw_get_selected_torrent_id(priv->parent), &json,
@@ -549,10 +552,10 @@ static GObject *trg_torrent_props_dialog_constructor(GType type,
     gtk_window_set_transient_for(window, GTK_WINDOW(priv->parent));
     gtk_window_set_destroy_with_parent(window, TRUE);
 
-    gtk_dialog_add_button(GTK_DIALOG(object), GTK_STOCK_CLOSE,
-                          GTK_RESPONSE_CLOSE);
-    gtk_dialog_add_button(GTK_DIALOG(object), GTK_STOCK_OK,
-                          GTK_RESPONSE_OK);
+    gtk_dialog_add_buttons (GTK_DIALOG(object),
+                            _("_Close"), GTK_RESPONSE_CLOSE,
+                            _("_OK"), GTK_RESPONSE_OK,
+                            NULL);
 
     gtk_container_set_border_width(GTK_CONTAINER(object), GUI_PAD);
 
@@ -567,14 +570,12 @@ static GObject *trg_torrent_props_dialog_constructor(GType type,
         gint64 serial = trg_client_get_serial(priv->client);
 
         /* Information */
-
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook),
                                  info_page_new(propsDialog),
                                  gtk_label_new(_("Information")));
         info_page_update(propsDialog, json, priv->torrentModel, &iter);
 
         /* Files */
-
         priv->filesModel = trg_files_model_new();
         priv->filesTv =
             trg_files_tree_view_new(priv->filesModel, priv->parent,
@@ -590,7 +591,6 @@ static GObject *trg_torrent_props_dialog_constructor(GType type,
                                  gtk_label_new(_("Files")));
 
         /* Peers */
-
         priv->peersModel = trg_peers_model_new();
         priv->peersTv = trg_peers_tree_view_new(prefs, priv->peersModel,
                                                 "TrgPeersTreeView-dialog");
@@ -604,7 +604,6 @@ static GObject *trg_torrent_props_dialog_constructor(GType type,
                                  gtk_label_new(_("Peers")));
 
         /* Trackers */
-
         priv->trackersModel = trg_trackers_model_new();
         priv->trackersTv = trg_trackers_tree_view_new(priv->trackersModel,
                                                       priv->client,
@@ -636,8 +635,8 @@ static GObject *trg_torrent_props_dialog_constructor(GType type,
 
     gtk_container_set_border_width(GTK_CONTAINER(notebook), GUI_PAD);
 
-    contentvbox = gtk_dialog_get_content_area(GTK_DIALOG(object));
-    gtk_box_pack_start(GTK_BOX(contentvbox), notebook, TRUE, TRUE, 0);
+    GtkWidget *contentbox = gtk_dialog_get_content_area(GTK_DIALOG(object));
+    gtk_box_pack_start(GTK_BOX(contentbox), notebook, TRUE, TRUE, 0);
 
     if (priv->show_details) {
         TrgPrefs *prefs = trg_client_get_prefs(priv->client);

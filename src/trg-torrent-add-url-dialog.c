@@ -112,10 +112,10 @@ static void trg_torrent_add_url_dialog_init(TrgTorrentAddUrlDialog * self)
 {
     TrgTorrentAddUrlDialogPrivate *priv =
         TRG_TORRENT_ADD_URL_DIALOG_GET_PRIVATE(self);
-    GtkWidget *w, *t, *contentvbox;
+    GtkWidget *w, *t;
     guint row = 0;
 
-    contentvbox = gtk_dialog_get_content_area(GTK_DIALOG(self));
+    GtkWidget *contentbox = gtk_dialog_get_content_area(GTK_DIALOG(self));
 
     t = hig_workarea_create();
 
@@ -130,10 +130,10 @@ static void trg_torrent_add_url_dialog_init(TrgTorrentAddUrlDialog * self)
     gtk_window_set_title(GTK_WINDOW(self), _("Add torrent from URL"));
     gtk_window_set_destroy_with_parent(GTK_WINDOW(self), TRUE);
 
-    gtk_dialog_add_button(GTK_DIALOG(self), GTK_STOCK_CLOSE,
+    gtk_dialog_add_button(GTK_DIALOG(self), _("_Close"),
                           GTK_RESPONSE_CANCEL);
     priv->addButton =
-        gtk_dialog_add_button(GTK_DIALOG(self), GTK_STOCK_ADD,
+        gtk_dialog_add_button(GTK_DIALOG(self), _("_Add"),
                               GTK_RESPONSE_ACCEPT);
     gtk_widget_set_sensitive(priv->addButton, FALSE);
 
@@ -141,13 +141,9 @@ static void trg_torrent_add_url_dialog_init(TrgTorrentAddUrlDialog * self)
 
     gtk_dialog_set_default_response(GTK_DIALOG(self), GTK_RESPONSE_ACCEPT);
 
-    gtk_dialog_set_alternative_button_order(GTK_DIALOG(self),
-                                            GTK_RESPONSE_ACCEPT,
-                                            GTK_RESPONSE_CANCEL, -1);
-
     gtk_container_set_border_width(GTK_CONTAINER(t), GUI_PAD);
 
-    gtk_box_pack_start(GTK_BOX(contentvbox), t, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(contentbox), t, TRUE, TRUE, 0);
 }
 
 TrgTorrentAddUrlDialog *trg_torrent_add_url_dialog_new(TrgMainWindow * win,
@@ -164,6 +160,8 @@ TrgTorrentAddUrlDialog *trg_torrent_add_url_dialog_new(TrgMainWindow * win,
     g_signal_connect(G_OBJECT(obj),
                      "response",
                      G_CALLBACK(trg_torrent_add_url_response_cb), win);
+
+    gtk_window_set_modal (GTK_WINDOW(obj), TRUE);
 
     return TRG_TORRENT_ADD_URL_DIALOG(obj);
 }

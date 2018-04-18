@@ -479,7 +479,7 @@ static GObject *trg_torrent_graph_constructor(GType type,
 {
     GObject *object;
     TrgTorrentGraphPrivate *priv;
-    GtkWidget *hbox;
+//    GtkWidget *hbox;
     int i;
 
     object =
@@ -513,15 +513,22 @@ static GObject *trg_torrent_graph_constructor(GType type,
     priv->speed = 1000;
     priv->max = 1024;
 
-    hbox = gtk_hbox_new(FALSE, 0);
+//    hbox = gtk_hbox_new(FALSE, 0);
+      GtkWidget *grid = gtk_grid_new();
 
     priv->label_in = gtk_label_new(NULL);
     priv->label_out = gtk_label_new(NULL);
 
-    gtk_box_pack_start(GTK_BOX(hbox), priv->label_in, FALSE, FALSE, 65);
-    gtk_box_pack_start(GTK_BOX(hbox), priv->label_out, FALSE, FALSE, 0);
+//    gtk_box_pack_start(GTK_BOX(hbox), priv->label_in, FALSE, FALSE, 65);
+    gtk_grid_attach(GTK_GRID(grid), priv->label_in, 0, 0, 1, 1);
+    gtk_widget_set_margin_end (priv->label_in, 65);
+//    gtk_box_pack_start(GTK_BOX(hbox), priv->label_out, FALSE, FALSE, 0);
+    gtk_grid_attach(GTK_GRID(grid), priv->label_out, 1, 0, 1, 1);
 
-    gtk_box_pack_start(GTK_BOX(object), hbox, FALSE, FALSE, 2);
+//    gtk_box_pack_start(GTK_BOX(object), hbox, FALSE, FALSE, 2);
+
+//    gtk_box_pack_start(GTK_BOX(object), grid, FALSE, FALSE, 2);
+    gtk_grid_attach(GTK_GRID(object), grid, 0, 0, 1, 1);
 
     gdk_color_parse(GRAPH_OUT_COLOR, &priv->colors[0]);
     gdk_color_parse(GRAPH_IN_COLOR, &priv->colors[1]);
@@ -530,7 +537,7 @@ static GObject *trg_torrent_graph_constructor(GType type,
     priv->render_counter = (priv->frames_per_unit - 1);
     priv->draw = FALSE;
 
-    gtk_box_set_homogeneous(GTK_BOX(object), FALSE);
+    //gtk_box_set_homogeneous(GTK_BOX(object), FALSE);
 
     priv->disp = gtk_drawing_area_new();
     g_signal_connect(G_OBJECT(priv->disp), "expose_event",
@@ -540,7 +547,10 @@ static GObject *trg_torrent_graph_constructor(GType type,
 
     gtk_widget_set_events(priv->disp, GDK_EXPOSURE_MASK);
 
-    gtk_box_pack_start(GTK_BOX(object), priv->disp, TRUE, TRUE, 0);
+    //gtk_box_pack_start(GTK_BOX(object), priv->disp, TRUE, TRUE, 0);
+    gtk_grid_attach(GTK_GRID(object), priv->disp, 0, 1, 1, 1);
+    gtk_widget_set_halign (priv->disp, GTK_ALIGN_FILL);
+    gtk_widget_set_valign (priv->disp, GTK_ALIGN_FILL);
 
     priv->points = NULL;
     for (i = 0; i < GRAPH_NUM_DATA_BLOCK_ELEMENTS; i++) {

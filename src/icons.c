@@ -56,9 +56,12 @@ static GdkPixbuf *create_void_pixbuf(int width, int height)
 static int get_size_in_pixels(GtkWidget * widget, GtkIconSize icon_size)
 {
     int width, height;
-
+/* dugong
     gtk_icon_size_lookup_for_settings(gtk_widget_get_settings(widget),
                                       icon_size, &width, &height);
+*/
+    gtk_icon_size_lookup (icon_size, &width, &height);
+
     return MAX(width, height);
 }
 
@@ -142,7 +145,8 @@ static GdkPixbuf *get_themed_icon_pixbuf(GThemedIcon * icon,
         g_clear_error(&error);
     }
 
-    gtk_icon_info_free(icon_info);
+    //gtk_icon_info_free(icon_info);
+    g_object_unref (icon_info);
     g_strfreev(icon_names);
 
     return pixbuf;

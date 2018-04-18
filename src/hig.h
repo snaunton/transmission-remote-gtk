@@ -29,9 +29,9 @@ void       hig_workarea_add_section_title_widget (GtkWidget * t,
                                                   guint     * row,
                                                   GtkWidget * w);
 
-void       hig_workarea_add_section_title (GtkWidget  *  table,
-                                           guint      * row,
-                                           const char * section_title);
+void       hig_workarea_add_section_title (GtkWidget   *  table,
+                                           guint       * row,
+                                           const gchar * section_title);
 
 void       hig_workarea_add_wide_tall_control (GtkWidget * table,
                                                guint     * row,
@@ -43,7 +43,7 @@ void       hig_workarea_add_wide_control (GtkWidget * table,
 
 GtkWidget* hig_workarea_add_wide_checkbutton (GtkWidget  * table,
                                               guint      * row,
-                                              const char * mnemonic_string,
+                                              const gchar * mnemonic_string,
                                               gboolean     is_active);
 
 void       hig_workarea_add_label_w (GtkWidget * table,

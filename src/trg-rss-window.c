@@ -243,7 +243,6 @@ static GObject *trg_rss_window_constructor(GType type,
 {
     GObject *object;
     TrgRssWindowPrivate *priv;
-    GtkWidget *vbox;
     GtkToolItem *item;
     GtkWidget *toolbar;
 
@@ -275,18 +274,23 @@ static GObject *trg_rss_window_constructor(GType type,
 
     toolbar = gtk_toolbar_new();
 
-    item = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
+    item = gtk_tool_button_new (gtk_image_new_from_icon_name ("view-refresh" ,
+                                                              GTK_ICON_SIZE_LARGE_TOOLBAR),
+                                NULL);
     gtk_widget_set_sensitive(GTK_WIDGET(item), TRUE);
     gtk_tool_item_set_tooltip_text(item, "Refresh");
     g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(on_refresh), object);
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), item, 0);
 
-    item = gtk_tool_button_new_from_stock(GTK_STOCK_PREFERENCES);
+
+    item = gtk_tool_button_new (gtk_image_new_from_icon_name ("preferences-system" ,
+                                                              GTK_ICON_SIZE_LARGE_TOOLBAR),
+                                NULL);
     gtk_widget_set_sensitive(GTK_WIDGET(item), TRUE);
     gtk_tool_item_set_tooltip_text(item, "Configure Feeds");
     g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(on_configure), object);
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), item, 0);
-
+/*
     vbox = trg_vbox_new(FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(toolbar),
@@ -295,6 +299,14 @@ static GObject *trg_rss_window_constructor(GType type,
                            TRUE, TRUE, 0);
 
     gtk_container_add(GTK_CONTAINER(object), vbox);
+*/
+    GtkWidget *grid = gtk_grid_new();
+    gtk_widget_set_hexpand (GTK_WIDGET(toolbar), TRUE);
+    gtk_grid_attach (GTK_GRID(grid), GTK_WIDGET(toolbar), 0, 0, 1, 1);
+    GtkWidget *w = my_scrolledwin_new(GTK_WIDGET(priv->tree_view));
+    gtk_widget_set_hexpand (w, TRUE);
+    gtk_widget_set_vexpand (w, TRUE);
+    gtk_grid_attach (GTK_GRID(grid), w, 0, 1, 1, 1);
 
     /*g_signal_connect(object, "response",
                      G_CALLBACK(trg_rss_window_response_cb), NULL);*/

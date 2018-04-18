@@ -372,8 +372,8 @@ static GtkWidget *gtr_dialog_get_content_area(GtkDialog * dialog)
 
 static void gtr_dialog_set_content(GtkDialog * dialog, GtkWidget * content)
 {
-    GtkWidget *vbox = gtr_dialog_get_content_area(dialog);
-    gtk_box_pack_start(GTK_BOX(vbox), content, TRUE, TRUE, 0);
+    GtkWidget *contentbox = gtr_dialog_get_content_area(dialog);
+    gtk_box_pack_start(GTK_BOX(contentbox), content, TRUE, TRUE, 0);
     gtk_widget_show_all(content);
 }
 
@@ -540,6 +540,10 @@ trg_torrent_add_dialog_set_filenames(TrgTorrentAddDialog * d,
             gtk_button_set_label(chooser, _("(Multiple)"));
         }
     }
+                
+    GtkWidget *label = gtk_bin_get_child(GTK_BIN(chooser));
+    if(GTK_IS_LABEL(label))
+        gtk_label_set_xalign (GTK_LABEL(label), 0.0);
 
     priv->filenames = filenames;
 }
@@ -562,10 +566,9 @@ static GtkWidget *trg_torrent_add_dialog_generic(GtkWindow * parent,
 {
     GtkWidget *w = gtk_file_chooser_dialog_new(_("Add a Torrent"), parent,
                                                GTK_FILE_CHOOSER_ACTION_OPEN,
-                                               GTK_STOCK_CANCEL,
-                                               GTK_RESPONSE_CANCEL,
-                                               GTK_STOCK_ADD,
-                                               GTK_RESPONSE_ACCEPT, NULL);
+                                               _("_Add"), GTK_RESPONSE_ACCEPT,
+                                               _("_Cancel"), GTK_RESPONSE_CANCEL,
+                                               NULL);
     gchar *dir =
         trg_prefs_get_string(prefs, TRG_PREFS_KEY_LAST_TORRENT_DIR,
                              TRG_PREFS_GLOBAL);
@@ -575,9 +578,7 @@ static GtkWidget *trg_torrent_add_dialog_generic(GtkWindow * parent,
     }
 
     addTorrentFilters(GTK_FILE_CHOOSER(w));
-    gtk_dialog_set_alternative_button_order(GTK_DIALOG(w),
-                                            GTK_RESPONSE_ACCEPT,
-                                            GTK_RESPONSE_CANCEL, -1);
+
     gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(w), TRUE);
     return w;
 }
@@ -662,16 +663,18 @@ static GtkWidget
     gtk_list_store_set(model, &iter, 1, _("Low Priority"), 2, FC_PRIORITY,
                        3, TR_PRI_LOW, -1);
     gtk_list_store_append(model, &iter);
-    gtk_list_store_set(model, &iter, 0, GTK_STOCK_APPLY, 1, _("Download"),
+
+    gtk_list_store_set(model, &iter, 0, _("_Apply"), 1, _("Download"),
                        2, FC_ENABLED, 3, TRUE, -1);
     gtk_list_store_append(model, &iter);
-    gtk_list_store_set(model, &iter, 0, GTK_STOCK_CANCEL, 1, _("Skip"), 2,
-                       FC_ENABLED, 3, FALSE, -1);
 
+    gtk_list_store_set(model, &iter, 0, _("_Close"), 1, _("Skip"), 2,
+                       FC_ENABLED, 3, FALSE, -1);
     renderer = gtk_cell_renderer_pixbuf_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo), renderer, FALSE);
+
     gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(combo), renderer,
-                                  "stock-id", 0);
+                                  "icon-name", 0);
     renderer = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo), renderer, FALSE);
     gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(combo), renderer, "text",
@@ -710,13 +713,11 @@ static GObject *trg_torrent_add_dialog_constructor(GType type,
     gtk_window_set_destroy_with_parent(GTK_WINDOW(obj), TRUE);
 
     /* buttons */
-    gtk_dialog_add_button(GTK_DIALOG(obj), GTK_STOCK_CANCEL,
-                          GTK_RESPONSE_CANCEL);
-    gtk_dialog_add_button(GTK_DIALOG(obj), GTK_STOCK_OPEN,
-                          GTK_RESPONSE_ACCEPT);
-    gtk_dialog_set_alternative_button_order(GTK_DIALOG(obj),
-                                            GTK_RESPONSE_ACCEPT,
-                                            GTK_RESPONSE_CANCEL, -1);
+    gtk_dialog_add_buttons (GTK_DIALOG(obj),
+                            _("_Open"), GTK_RESPONSE_ACCEPT,
+                            _("_Cancel"), GTK_RESPONSE_CANCEL,
+                            NULL);
+
     gtk_dialog_set_default_response(GTK_DIALOG(obj), GTK_RESPONSE_ACCEPT);
 
     /* workspace */
@@ -745,8 +746,6 @@ static GObject *trg_torrent_add_dialog_constructor(GType type,
 
     priv->source_chooser = gtk_button_new();
     hig_workarea_add_row(t, &row, _("_Torrent file:"), priv->source_chooser, NULL);
-
-    gtk_button_set_alignment(GTK_BUTTON(priv->source_chooser), 0.0f, 0.5f);
 
     if (priv->filenames)
 		trg_torrent_add_dialog_set_filenames(TRG_TORRENT_ADD_DIALOG(obj),
@@ -928,3 +927,4 @@ void trg_torrent_add_dialog(TrgMainWindow * win, TrgClient * client)
 
     gtk_widget_destroy(GTK_WIDGET(w));
 }
+

@@ -26,6 +26,9 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <json-glib/json-glib.h>
+#ifdef ENABLE_NL_LANGINFO
+#include <langinfo.h>
+#endif
 
 #include "trg-main-window.h"
 #include "trg-remote-prefs-dialog.h"
@@ -296,6 +299,63 @@ static GtkWidget *trg_rprefs_alt_speed_spin_new(GList ** wl,
     return w;
 }
 
+static void
+trg_rprefs_alt_days_savefunc(GtkWidget * grid, JsonObject * obj,
+                                gchar * key)
+{
+    guint64 days = 0;
+
+    for(gint i = 0, x = 1; i < 7; i++, x<<=1) {
+        GtkWidget *w = gtk_grid_get_child_at (GTK_GRID(grid), i, 0);
+        if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w)))
+            days += x;
+    }
+
+    json_object_set_int_member(obj, key, days);
+}
+
+static GtkWidget *trg_rprefs_alt_days(GList ** wl,
+                                      JsonObject * Obj,
+                                      const gchar * key,
+                                      GtkWidget *alt_time_check)
+{
+    gchar *abdays_fallback[] = {_("Sun"), _("Mon"), _("Tue"), _("Wed"), _("Thu"), _("Fri"), _("Sat")};
+#ifdef ENABLE_NL_LANGINFO
+    nl_item abdays[] = {ABDAY_1, ABDAY_2, ABDAY_3, ABDAY_4, ABDAY_5, ABDAY_6, ABDAY_7};
+#endif
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_homogeneous (GTK_GRID(grid), TRUE);
+    g_signal_connect(G_OBJECT(alt_time_check), "toggled",
+                     G_CALLBACK(toggle_active_arg_is_sensitive), grid);
+
+    guint64 days = json_object_get_int_member(Obj, key);
+
+    for(gint i = 0, x = 1; i < 7; i++, x<<=1) {
+#ifdef ENABLE_NL_LANGINFO
+        gchar *utf8 = g_convert_with_fallback(nl_langinfo(abdays[i]), -1, "utf-8",
+                                              nl_langinfo(CODESET), NULL, NULL,
+                                              NULL, NULL);
+        GtkWidget *w = gtk_check_button_new_with_label (utf8 ? utf8 : abdays_fallback[i]);
+        g_free(utf8);
+#else
+        GtkWidget *w = gtk_check_button_new_with_label (abdays_fallback[i]);
+#endif
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), (days & x) == x);
+        gtk_grid_attach(GTK_GRID(grid), w, i, 0, 1, 1);
+    }
+
+    gtk_widget_set_sensitive(grid,
+    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(alt_time_check)));
+
+    trg_json_widget_desc *wd = g_new0(trg_json_widget_desc, 1);
+    wd->key = g_strdup(key);
+    wd->widget = grid;
+    wd->saveFunc = trg_rprefs_alt_days_savefunc;
+    *wl = g_list_append(*wl, wd);
+
+    return grid;
+}
+
 static GtkWidget *trg_rprefs_bandwidthPage(TrgRemotePrefsDialog * win,
                                            JsonObject * json)
 {
@@ -337,6 +397,10 @@ static GtkWidget *trg_rprefs_bandwidthPage(TrgRemotePrefsDialog * win,
                                   _("Alternate time range"), NULL);
     w = trg_rprefs_time_begin_end_new(&priv->widgets, json, tb);
     hig_workarea_add_row_w(t, &row, tb, w, NULL);
+
+    w = trg_rprefs_alt_days(&priv->widgets, json,
+                            SGET_ALT_SPEED_TIME_DAY, priv->alt_time_check);
+    hig_workarea_add_row(t, &row, _("Alternate days"), w, NULL);
 
     w = trg_rprefs_alt_speed_spin_new(&priv->widgets, json,
                                       SGET_ALT_SPEED_DOWN, priv->alt_check,
@@ -423,7 +487,7 @@ static gboolean on_port_tested(gpointer data)
             TRG_REMOTE_PREFS_DIALOG_GET_PRIVATE(response->cb_data);
 
         gtk_button_set_label(GTK_BUTTON(priv->port_test_button),
-                             _("Retest"));
+                             _("Re_test"));
         gtk_widget_set_sensitive(priv->port_test_button, TRUE);
 
         if (response->status == CURLE_OK) {
@@ -470,7 +534,7 @@ static gboolean on_blocklist_updated(gpointer data)
 
         gtk_widget_set_sensitive(priv->blocklist_update_button, TRUE);
         gtk_button_set_label(GTK_BUTTON(priv->blocklist_update_button),
-                             _("Update"));
+                             _("_Update"));
 
         if (response->status == CURLE_OK) {
             JsonObject *args = get_arguments(response->obj);
@@ -524,7 +588,7 @@ static GtkWidget *trg_rprefs_connPage(TrgRemotePrefsDialog * win,
     hig_workarea_add_row(t, &row, _("Peer port"), w, w);
 
     priv->port_test_label = gtk_label_new(_("Port test"));
-    w = priv->port_test_button = gtk_button_new_with_label(_("Test"));
+    w = priv->port_test_button = gtk_button_new_with_label(_("_Test"));
     g_signal_connect(w, "clicked", G_CALLBACK(port_test_cb), win);
     hig_workarea_add_row_w(t, &row, priv->port_test_label, w, NULL);
 
@@ -578,7 +642,7 @@ static GtkWidget *trg_rprefs_connPage(TrgRemotePrefsDialog * win,
     g_free((gchar *) stringValue);
 
     w = priv->blocklist_update_button =
-        gtk_button_new_with_label(_("Update"));
+        gtk_button_new_with_label(_("_Update"));
     g_signal_connect(G_OBJECT(w), "clicked",
                      G_CALLBACK(update_blocklist_cb), win);
     hig_workarea_add_row_w(t, &row, tb, w, NULL);
@@ -661,7 +725,7 @@ static GObject *trg_remote_prefs_dialog_constructor(GType type,
     GObject *object;
     TrgRemotePrefsDialogPrivate *priv;
     JsonObject *session;
-    GtkWidget *notebook, *contentvbox;
+    GtkWidget *notebook;
 
     object = G_OBJECT_CLASS
         (trg_remote_prefs_dialog_parent_class)->constructor(type,
@@ -670,17 +734,17 @@ static GObject *trg_remote_prefs_dialog_constructor(GType type,
     priv = TRG_REMOTE_PREFS_DIALOG_GET_PRIVATE(object);
     session = trg_client_get_session(priv->client);
 
-    contentvbox = gtk_dialog_get_content_area(GTK_DIALOG(object));
+    GtkWidget *contentbox = gtk_dialog_get_content_area(GTK_DIALOG(object));
 
     gtk_window_set_title(GTK_WINDOW(object), _("Remote Preferences"));
     gtk_window_set_transient_for(GTK_WINDOW(object),
                                  GTK_WINDOW(priv->parent));
     gtk_window_set_destroy_with_parent(GTK_WINDOW(object), TRUE);
 
-    gtk_dialog_add_button(GTK_DIALOG(object), GTK_STOCK_CLOSE,
-                          GTK_RESPONSE_CLOSE);
-    gtk_dialog_add_button(GTK_DIALOG(object), GTK_STOCK_OK,
-                          GTK_RESPONSE_OK);
+    gtk_dialog_add_buttons (GTK_DIALOG(object),
+                            _("_Close"), GTK_RESPONSE_CLOSE,
+                            _("_OK"), GTK_RESPONSE_OK,
+                            NULL);
 
     gtk_container_set_border_width(GTK_CONTAINER(object), GUI_PAD);
 
@@ -713,7 +777,7 @@ static GObject *trg_remote_prefs_dialog_constructor(GType type,
 
     gtk_container_set_border_width(GTK_CONTAINER(notebook), GUI_PAD);
 
-    gtk_box_pack_start(GTK_BOX(contentvbox), notebook, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(contentbox), notebook, TRUE, TRUE, 0);
 
     return object;
 }

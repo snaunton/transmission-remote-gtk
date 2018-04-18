@@ -1,6 +1,8 @@
 
 icondir = $(datadir)/icons
 nobase_icon_DATA = \
+	hicolor/16x16/status/alt-speed-off.png \
+	hicolor/16x16/status/alt-speed-on.png \
 	hicolor/16x16/apps/transmission-remote-gtk.png \
 	hicolor/22x22/apps/transmission-remote-gtk.png \
 	hicolor/24x24/apps/transmission-remote-gtk.png \

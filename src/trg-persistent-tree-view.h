@@ -38,7 +38,8 @@ G_BEGIN_DECLS
 #define TRG_PERSISTENT_TREE_VIEW_GET_CLASS(obj) \
   (G_TYPE_INSTANCE_GET_CLASS ((obj), TRG_TYPE_PERSISTENT_TREE_VIEW, TrgPersistentTreeViewClass))
     typedef struct {
-    GtkVBox parent;
+    //GtkVBox parent;
+    GtkGrid parent;
 } TrgPersistentTreeView;
 
 typedef struct {

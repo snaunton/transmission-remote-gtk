@@ -211,20 +211,26 @@ view_popup_menu(GtkWidget * treeview, GdkEventButton * event,
     GtkWidget *menu, *item;
 
     menu = gtk_menu_new();
-
+/*
     item = gtk_image_menu_item_new_with_label(GTK_STOCK_REFRESH);
     gtk_image_menu_item_set_use_stock(GTK_IMAGE_MENU_ITEM(item), TRUE);
     gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM
                                               (item), TRUE);
+*/
+    item = gtk_menu_item_new_with_mnemonic (_("_Refresh"));
+
     g_signal_connect(item, "activate", G_CALLBACK(refresh_statelist_cb),
                      treeview);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
     gtk_widget_show_all(menu);
-
+/*
     gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
                    (event != NULL) ? event->button : 0,
                    gdk_event_get_time((GdkEvent *) event));
+*/
+
+    gtk_menu_popup_at_pointer (GTK_MENU(menu), (GdkEvent*) event);
 }
 
 static gboolean view_onPopupMenu(GtkWidget * treeview, gpointer userdata)
@@ -370,7 +376,8 @@ void trg_state_selector_update(TrgStateSelector * s, guint whatsChanged)
 					}
                     gtk_list_store_set(GTK_LIST_STORE(model), &iter,
                                        STATE_SELECTOR_ICON,
-                                       GTK_STOCK_NETWORK,
+                                       //GTK_STOCK_NETWORK,
+                                       "network-workgroup",
                                        STATE_SELECTOR_NAME, announceHost,
                                        STATE_SELECTOR_SERIAL, updateSerial,
                                        STATE_SELECTOR_COUNT, 1,
@@ -407,7 +414,8 @@ void trg_state_selector_update(TrgStateSelector * s, guint whatsChanged)
 				}
                 gtk_list_store_set(GTK_LIST_STORE(model), &iter,
                                    STATE_SELECTOR_ICON,
-                                   GTK_STOCK_DIRECTORY,
+                                   //GTK_STOCK_DIRECTORY,
+                                   "folder",
                                    STATE_SELECTOR_NAME, dir,
                                    STATE_SELECTOR_SERIAL, updateSerial,
                                    STATE_SELECTOR_BIT, FILTER_FLAG_DIR,
@@ -554,7 +562,7 @@ trg_state_selector_stats_update(TrgStateSelector * s,
     GtkTreeIter iter;
     if (stats->error > 0 && !priv->error_rr) {
         trg_state_selector_add_state(s, &iter, priv->n_categories - 1,
-                                     GTK_STOCK_DIALOG_WARNING, _("Error"),
+                                     "dialog-warning", _("Error"),
                                      TORRENT_FLAG_ERROR, &priv->error_rr);
 
     } else if (stats->error < 1 && priv->error_rr) {
@@ -654,7 +662,7 @@ static GObject *trg_state_selector_constructor(GType type,
     renderer = gtk_cell_renderer_pixbuf_new();
     gtk_tree_view_column_pack_start(column, renderer, FALSE);
     g_object_set(renderer, "stock-size", 4, NULL);
-    gtk_tree_view_column_set_attributes(column, renderer, "stock-id",
+    gtk_tree_view_column_set_attributes(column, renderer, "icon-name",
                                         STATE_SELECTOR_ICON, NULL);
 
     renderer = trg_cell_renderer_counter_new();
@@ -671,35 +679,35 @@ static GObject *trg_state_selector_constructor(GType type,
                                              G_TYPE_INT64, G_TYPE_UINT);
     gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(store));
 
-    trg_state_selector_add_state(selector, &iter, -1, GTK_STOCK_ABOUT,
+    trg_state_selector_add_state(selector, &iter, -1, "help-about",
                                  _("All"), 0, &priv->all_rr);
-    trg_state_selector_add_state(selector, &iter, -1, GTK_STOCK_GO_DOWN,
+    trg_state_selector_add_state(selector, &iter, -1, "go-down",
                                  _("Downloading"),
                                  TORRENT_FLAG_DOWNLOADING, &priv->down_rr);
     trg_state_selector_add_state(selector, &iter, -1,
-                                 GTK_STOCK_MEDIA_REWIND, _("Queue Down"),
+                                 "media-seek-backward", _("Queue Down"),
                                  TORRENT_FLAG_DOWNLOADING_WAIT,
                                  &priv->down_wait_rr);
-    trg_state_selector_add_state(selector, &iter, -1, GTK_STOCK_GO_UP,
+    trg_state_selector_add_state(selector, &iter, -1, "go-up",
                                  _("Seeding"), TORRENT_FLAG_SEEDING,
                                  &priv->seeding_rr);
     trg_state_selector_add_state(selector, &iter, -1,
-                                 GTK_STOCK_MEDIA_FORWARD, _("Queue Up"),
+                                 "media-seek-forward", _("Queue Up"),
                                  TORRENT_FLAG_SEEDING_WAIT,
                                  &priv->seed_wait_rr);
     trg_state_selector_add_state(selector, &iter, -1,
-                                 GTK_STOCK_MEDIA_PAUSE, _("Paused"),
+                                 "media-playback-pause", _("Paused"),
                                  TORRENT_FLAG_PAUSED, &priv->paused_rr);
-    trg_state_selector_add_state(selector, &iter, -1, GTK_STOCK_APPLY,
+    trg_state_selector_add_state(selector, &iter, -1, "face-smile", // gtk-apply deprecated
                                  _("Complete"), TORRENT_FLAG_COMPLETE,
                                  &priv->complete_rr);
-    trg_state_selector_add_state(selector, &iter, -1, GTK_STOCK_SELECT_ALL,
+    trg_state_selector_add_state(selector, &iter, -1, "face-sad",
                                  _("Incomplete"), TORRENT_FLAG_INCOMPLETE,
                                  &priv->incomplete_rr);
-    trg_state_selector_add_state(selector, &iter, -1, GTK_STOCK_NETWORK,
+    trg_state_selector_add_state(selector, &iter, -1, "network-workgroup",
                                  _("Active"), TORRENT_FLAG_ACTIVE,
                                  &priv->active_rr);
-    trg_state_selector_add_state(selector, &iter, -1, GTK_STOCK_REFRESH,
+    trg_state_selector_add_state(selector, &iter, -1, "view-refresh",
                                  _("Checking"), TORRENT_FLAG_CHECKING_ANY,
                                  &priv->checking_rr);
     trg_state_selector_add_state(selector, &iter, -1, NULL, NULL, 0, NULL);
@@ -749,11 +757,11 @@ trg_state_selector_set_queues_enabled(TrgStateSelector * s,
     GtkTreeIter iter;
 
     if (enabled) {
-        trg_state_selector_add_state(s, &iter, 2, GTK_STOCK_MEDIA_REWIND,
+        trg_state_selector_add_state(s, &iter, 2, "media-seek-backward",
                                      _("Queue Down"),
                                      TORRENT_FLAG_DOWNLOADING_WAIT,
                                      &priv->down_wait_rr);
-        trg_state_selector_add_state(s, &iter, 4, GTK_STOCK_MEDIA_FORWARD,
+        trg_state_selector_add_state(s, &iter, 4, "media-seek-forward",
                                      _("Queue Up"),
                                      TORRENT_FLAG_SEEDING_WAIT,
                                      &priv->seed_wait_rr);

@@ -91,19 +91,6 @@ AS_IF([test x$with_libgeoip != xno], [
 ])
 AM_CONDITIONAL([HAVE_GEOIP], [test "x$have_geoip" = "xyes"])
 
-
-AC_ARG_WITH([libnotify], AC_HELP_STRING([--without-libnotify], [disable libnotify]))
-have_libnotify=no
-AS_IF([test x$with_libnotify != xno], [
-	PKG_CHECK_MODULES([NOTIFY], [libnotify], [
-		have_libnotify=yes
-		AC_DEFINE(HAVE_LIBNOTIFY, 1, [Define if libnotify is available])
-	], [
-		AC_MSG_WARN([libnotify is required for popup desktop notifications])
-	])
-])
-
-
 AC_ARG_WITH([libmrss], AC_HELP_STRING([--without-libmrss], [disable RSS support]))
 have_libmrss=no
 AS_IF([test x$with_libmrss != xno], [
@@ -128,17 +115,54 @@ AS_IF([test x$with_libproxy != xno], [
 	])
 ])
 
+AC_ARG_WITH([libappindicator],
+    AC_HELP_STRING([--with-libappindicator], [enable libappindicator]),
+    [have_libappindicator=yes],
+    [have_libappindicator=no]
+)
 
-AC_ARG_WITH([libappindicator], AC_HELP_STRING([--without-libappindicator], [disable libappindicator]))
-have_libappindicator=no
-AS_IF([test x$with_libappindicator != xno], [
+AC_ARG_ENABLE([status_icon],
+    AC_HELP_STRING([--enable-status-icon], [enable deprecated GtkStatusIcon support]),
+    [enable_status_icon=yes],
+    [enable_status_icon=no]
+)
+
+AS_IF([test x$have_libappindicator = xyes -a x$enable_status_icon = xyes], [
+        AC_MSG_ERROR([--with-libappindicator and --enable-status-icon are mutually exclusive], 1)
+])
+
+AS_IF([test x$have_libappindicator = xyes], [
 	PKG_CHECK_MODULES([APPINDICATOR], [appindicator3-0.1], [
 		AC_DEFINE(HAVE_LIBAPPINDICATOR, 1, [Define if libappindicator is available])
+        AC_SUBST(HAVE_LIBAPPINDICATOR)
+        AC_DEFINE(HAVE_SYSTEM_TRAY, 1, [Define if system tray support is enabled])
+        AC_SUBST(HAVE_SYSTEM_TRAY)
 	], [
-		AC_MSG_WARN([Ubuntu Unity users should consider building with libappindicator])
+		AC_MSG_ERROR([libappindicator not found], 1)
 	])
 ])
 
+AS_IF([test x$enable_status_icon = xyes],
+    AC_DEFINE(ENABLE_STATUS_ICON, 1, [Define if status_icon is available])
+    AC_SUBST(ENABLE_STATUS_ICON)
+    AC_DEFINE(HAVE_SYSTEM_TRAY, 1, [Define if system tray support is enabled])
+    AC_SUBST(HAVE_SYSTEM_TRAY)
+)
+
+AC_ARG_ENABLE([nl_langinfo],
+	AC_HELP_STRING([--disable-nl_langinfo], [disable nl_langinfo (for day names)]),
+	[enable_nl_langinfo=no],
+	[enable_nl_langinfo=yes])
+AS_IF([test x$enable_nl_langinfo != xno], [
+	AC_CHECK_FUNC(nl_langinfo,[
+		enable_nl_langinfo=yes
+		AC_DEFINE(ENABLE_NL_LANGINFO, 1, [Define if nl_langinfo is available])
+		AC_SUBST(ENABLE_NL_LANGINFO)
+	], [
+		AC_MSG_WARN([nl_langinfo not available])
+        enable_nl_langinfo=no
+	])
+])
 
 dnl ---- build flags ----
 AX_APPEND_COMPILE_FLAGS([ \
@@ -197,8 +221,9 @@ echo "
 	debug .........: $enable_debug
 
 	geoip .........: $have_geoip
-	libnotify .....: $have_libnotify
 	libmrss .......: $have_libmrss
 	libproxy ......: $have_libproxy
 	libappindicator: $have_libappindicator
+	status-icon....: $enable_status_icon
+	nl_langinfo....: $enable_nl_langinfo
 "

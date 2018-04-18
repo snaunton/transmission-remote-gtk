@@ -38,11 +38,11 @@ G_BEGIN_DECLS
 #define TRG_STATUS_BAR_GET_CLASS(obj) \
   (G_TYPE_INSTANCE_GET_CLASS ((obj), TRG_TYPE_STATUS_BAR, TrgStatusBarClass))
     typedef struct {
-    GtkHBox parent;
+    GtkGrid parent;
 } TrgStatusBar;
 
 typedef struct {
-    GtkHBoxClass parent_class;
+    GtkGridClass parent_class;
 } TrgStatusBarClass;
 
 GType trg_status_bar_get_type(void);
