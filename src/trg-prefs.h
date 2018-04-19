@@ -32,6 +32,9 @@
 
 #define TRG_PREFS_KEY_RPC_URL_PATH "rpc-url-path"
 #define TRG_PREFS_KEY_PROFILE_ID    "profile-id"
+#ifdef HAVE_LIBSECRET
+#define TRG_PREFS_KEY_PROFILE_UUID    "profile-uuid"
+#endif
 #define TRG_PREFS_KEY_PROFILES    "profiles"
 #define TRG_PREFS_KEY_RSS    "rss"
 #define TRG_PREFS_KEY_PROFILE_NAME   "profile-name"
@@ -147,6 +150,9 @@ JsonArray *trg_prefs_get_profiles(TrgPrefs * p);
 JsonArray *trg_prefs_get_rss(TrgPrefs *p);
 void trg_prefs_set_connection(TrgPrefs * p, JsonObject * profile);
 gint trg_prefs_get_profile_id(TrgPrefs * p);
+#ifdef HAVE_LIBSECRET
+const gchar *trg_prefs_get_profile_uuid(TrgPrefs * p);
+#endif
 void trg_prefs_del_profile(TrgPrefs * p, JsonObject * profile);
 void trg_prefs_set_profile(TrgPrefs * p, JsonObject * profile);
 JsonObject *trg_prefs_new_profile(TrgPrefs * p);

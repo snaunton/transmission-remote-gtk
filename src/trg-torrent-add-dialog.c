@@ -424,29 +424,34 @@ store_add_node(GtkTreeStore * store, GtkTreeIter * parent,
 
 static void torrent_not_parsed_warning(GtkWindow * parent)
 {
-    GtkWidget *dialog = gtk_message_dialog_new(parent,
-                                               GTK_DIALOG_DESTROY_WITH_PARENT,
-                                               GTK_MESSAGE_WARNING,
-                                               GTK_BUTTONS_OK,
-                                               _
-                                               ("Unable to parse torrent file. File preferences unavailable, but you can still try uploading it."));
-    gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
-    gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
+//    GtkWidget *dialog = gtk_message_dialog_new(parent,
+//                                               GTK_DIALOG_DESTROY_WITH_PARENT,
+//                                               GTK_MESSAGE_WARNING,
+//                                               GTK_BUTTONS_OK,
+//                                               _
+//                                               ("Unable to parse torrent file. File preferences unavailable, but you can still try uploading it."));
+//    gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
+//    gtk_dialog_run(GTK_DIALOG(dialog));
+//    gtk_widget_destroy(dialog);
+    trg_util_warning_message_dialog(parent,
+                                    _("Unable to parse torrent file. File preferences unavailable, but you can still try uploading it.")); 
 }
 
 static void torrent_not_found_error(GtkWindow * parent, gchar * file)
 {
-    GtkWidget *dialog = gtk_message_dialog_new(parent,
-                                               GTK_DIALOG_DESTROY_WITH_PARENT,
-                                               GTK_MESSAGE_ERROR,
-                                               GTK_BUTTONS_OK,
-                                               _
-                                               ("Unable to open torrent file: %s"),
-                                               file);
-    gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
-    gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
+//    GtkWidget *dialog = gtk_message_dialog_new(parent,
+//                                               GTK_DIALOG_DESTROY_WITH_PARENT,
+//                                               GTK_MESSAGE_ERROR,
+//                                               GTK_BUTTONS_OK,
+//                                               _
+//                                               ("Unable to open torrent file: %s"),
+//                                               file);
+//    gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
+//    gtk_dialog_run(GTK_DIALOG(dialog));
+//    gtk_widget_destroy(dialog);
+    gchar *msg = g_strdup_printf (_("Unable to open torrent file: %s"), file);
+    trg_util_error_message_dialog (parent, msg);
+    g_free(msg);
 }
 
 static void
@@ -584,6 +589,29 @@ static GtkWidget *trg_torrent_add_dialog_generic(GtkWindow * parent,
 }
 
 static void
+trg_torrent_add_dialog_source_click_cb_cb(GtkDialog *dlg, gint response_id, gpointer data)
+{
+    TrgTorrentAddDialogPrivate *priv =
+        TRG_TORRENT_ADD_DIALOG_GET_PRIVATE(data);
+
+    if (response_id == GTK_RESPONSE_ACCEPT) {
+        if (priv->filenames)
+            g_str_slist_free(priv->filenames);
+
+        priv->filenames =
+            gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dlg));
+
+        trg_torrent_add_dialog_generic_save_dir(GTK_FILE_CHOOSER(dlg),
+                                                trg_client_get_prefs(priv->client));
+
+        trg_torrent_add_dialog_set_filenames(TRG_TORRENT_ADD_DIALOG(data),
+                                             priv->filenames);
+    }
+
+    gtk_widget_destroy(GTK_WIDGET(dlg));
+}
+
+static void
 trg_torrent_add_dialog_source_click_cb(GtkWidget * w, gpointer data)
 {
     TrgTorrentAddDialogPrivate *priv =
@@ -592,21 +620,26 @@ trg_torrent_add_dialog_source_click_cb(GtkWidget * w, gpointer data)
                                                   trg_client_get_prefs
                                                   (priv->client));
 
-    if (gtk_dialog_run(GTK_DIALOG(d)) == GTK_RESPONSE_ACCEPT) {
-        if (priv->filenames)
-            g_str_slist_free(priv->filenames);
+    g_signal_connect(d, "response",
+                     G_CALLBACK(trg_torrent_add_dialog_source_click_cb_cb),
+                     data);
+    gtk_widget_show_all(d);
 
-        priv->filenames =
-            gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(d));
-
-        trg_torrent_add_dialog_generic_save_dir(GTK_FILE_CHOOSER(d),
-                                                trg_client_get_prefs
-                                                (priv->client));
-        trg_torrent_add_dialog_set_filenames(TRG_TORRENT_ADD_DIALOG(data),
-                                             priv->filenames);
-    }
-
-    gtk_widget_destroy(GTK_WIDGET(d));
+//    if (gtk_dialog_run(GTK_DIALOG(d)) == GTK_RESPONSE_ACCEPT) {
+//        if (priv->filenames)
+//            g_str_slist_free(priv->filenames);
+//
+//        priv->filenames =
+//            gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(d));
+//
+//        trg_torrent_add_dialog_generic_save_dir(GTK_FILE_CHOOSER(d),
+//                                                trg_client_get_prefs
+//                                                (priv->client));
+//        trg_torrent_add_dialog_set_filenames(TRG_TORRENT_ADD_DIALOG(data),
+//                                             priv->filenames);
+//    }
+//
+//    gtk_widget_destroy(GTK_WIDGET(d));
 }
 
 static gboolean

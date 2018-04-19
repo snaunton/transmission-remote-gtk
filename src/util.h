@@ -94,6 +94,16 @@ gboolean is_minimised_arg(const gchar * arg);
 GtkWidget *trg_vbox_new(gboolean homogeneous, gint spacing);
 GtkWidget *trg_hbox_new(gboolean homogeneous, gint spacing);
 gboolean is_unity(void);
+void trg_util_dialog_response_destroy_cb(GtkDialog *dlg,
+                                         gint response_id G_GNUC_UNUSED,
+                                         gpointer userdata G_GNUC_UNUSED);
+void trg_util_message_dialog(GtkWindow *parent,
+                             const gchar *title, 
+                             const gchar *message,
+                             GtkMessageType type);
+#define trg_util_error_message_dialog(p,m) trg_util_message_dialog(p,_("Error"),m,GTK_MESSAGE_ERROR)
+#define trg_util_warning_message_dialog(p,m) trg_util_message_dialog(p,_("Warning"),m,GTK_MESSAGE_WARNING)
+#define trg_util_info_message_dialog(p,m) trg_util_message_dialog(p,_("Warning"),m,GTK_MESSAGE_INFO)
 
 #ifdef WIN32
 gchar *trg_win32_support_path(gchar * file);

@@ -198,6 +198,7 @@ static void trg_rss_on_get_error(TrgRssModel *model, rss_get_error *error, gpoin
 	} else {
 		msg = g_strdup(curl_easy_strerror(error->error_code));
 	}
+/*
     GtkWidget *dialog = gtk_message_dialog_new(win,
                                                GTK_DIALOG_MODAL,
                                                GTK_MESSAGE_ERROR,
@@ -205,13 +206,21 @@ static void trg_rss_on_get_error(TrgRssModel *model, rss_get_error *error, gpoin
                                                "%s", msg);
     g_free(msg);
     gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
-    gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
+//    gtk_dialog_run(GTK_DIALOG(dialog));
+//    gtk_widget_destroy(dialog);
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(trg_util_dialog_response_destroy_cb),
+                     NULL);
+    gtk_widget_show_all(dialog);
+*/
+   trg_util_error_message_dialog(win, msg);
+   g_free(msg);
 }
 
 static void trg_rss_on_parse_error(TrgRssModel *model, rss_parse_error *error, gpointer data) {
 	GtkWindow *win = GTK_WINDOW(data);
 	gchar *msg = g_strdup_printf(_("Error parsing RSS feed \"%s\": %s"), error->feed_id, error->error->message);
+/*
     GtkWidget *dialog = gtk_message_dialog_new(win,
                                                GTK_DIALOG_MODAL,
                                                GTK_MESSAGE_ERROR,
@@ -219,8 +228,16 @@ static void trg_rss_on_parse_error(TrgRssModel *model, rss_parse_error *error, g
                                                "%s", msg);
     g_free(msg);
     gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
-    gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
+//    gtk_dialog_run(GTK_DIALOG(dialog));
+//    gtk_widget_destroy(dialog);
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(trg_util_dialog_response_destroy_cb),
+                     NULL);
+    gtk_widget_show_all(dialog);
+*/
+
+   trg_util_error_message_dialog(win, msg);
+   g_free(msg);
 }
 
 static void on_configure(GtkWidget *widget, gpointer data) {

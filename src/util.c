@@ -582,3 +582,30 @@ gboolean is_unity(void)
 {
     return g_strcmp0(g_getenv("XDG_CURRENT_DESKTOP"), "Unity") == 0;
 }
+
+void
+trg_util_dialog_response_destroy_cb(GtkDialog *dlg, 
+                                    gint response_id G_GNUC_UNUSED,
+                                    gpointer userdata G_GNUC_UNUSED)
+{
+    gtk_widget_destroy(GTK_WIDGET(dlg));
+}
+
+void 
+trg_util_message_dialog(GtkWindow *parent,
+                        const gchar *title,
+                        const gchar *message,
+                        GtkMessageType type)
+{
+    GtkWidget *dialog = gtk_message_dialog_new(parent,
+                                               GTK_DIALOG_MODAL,
+                                               type,
+                                               GTK_BUTTONS_OK,
+                                               "%s", message);
+
+    gtk_window_set_title(GTK_WINDOW(dialog), title);
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(trg_util_dialog_response_destroy_cb),
+                     NULL);
+    gtk_widget_show_all(dialog);
+}

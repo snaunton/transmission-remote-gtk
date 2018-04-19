@@ -36,6 +36,9 @@
 #ifdef HAVE_LIBAPPINDICATOR
 #include <libappindicator/app-indicator.h>
 #endif
+#ifdef HAVE_LIBSECRET
+#include <libsecret/secret.h>
+#endif
 
 #include "trg-client.h"
 #include "json.h"
@@ -75,6 +78,9 @@
 #include "trg-remote-prefs-dialog.h"
 #include "trg-preferences-dialog.h"
 #include "upload.h"
+#ifdef HAVE_LIBSECRET
+#include "trg-secret.h"
+#endif
 
 /* The rather large main window class, which glues everything together. */
 
@@ -274,7 +280,9 @@ typedef struct
     guint sessionTimerId;
     gboolean min_on_start;
     gboolean queuesEnabled;
-
+#if HAVE_LIBSECRET
+    gboolean fetch_password_failed_flag;
+#endif
     gchar **args;
 } TrgMainWindowPrivate;
 
@@ -622,18 +630,27 @@ void connect_cb(GtkWidget * w, gpointer data)
             msg = _("Unknown error getting settings");
             break;
         }
-
+/*
 	dialog = gtk_message_dialog_new(GTK_WINDOW(data),
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					(populate_result == TRG_NO_HOSTNAME_SET) ? GTK_MESSAGE_INFO : GTK_MESSAGE_ERROR, 
 					GTK_BUTTONS_OK,
 					"%s", msg);
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
-        reset_connect_args(TRG_MAIN_WINDOW(data));
+//	gtk_dialog_run(GTK_DIALOG(dialog));
+//	gtk_widget_destroy(dialog);
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(trg_util_dialog_response_destroy_cb), NULL);
+    gtk_widget_show_all(dialog);
+*/
+    if(populate_result == TRG_NO_HOSTNAME_SET)
+        trg_util_info_message_dialog(GTK_WINDOW(data), msg);
+    else
+        trg_util_error_message_dialog(GTK_WINDOW(data), msg);
+
+    reset_connect_args(TRG_MAIN_WINDOW(data));
 
 	if (populate_result == TRG_NO_HOSTNAME_SET)
-	  open_local_prefs_cb (NULL, win);
+	    open_local_prefs_cb (NULL, win);
 
         return;
     }
@@ -1143,6 +1160,7 @@ static gboolean on_session_get(gpointer data)
                 g_strdup_printf(_
                                 ("This application supports Transmission %g and later, you have %g."),
                                  TRANSMISSION_MIN_SUPPORTED, version);
+/*
             GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(win),
                                                        GTK_DIALOG_MODAL,
                                                        GTK_MESSAGE_ERROR,
@@ -1150,8 +1168,14 @@ static gboolean on_session_get(gpointer data)
                                                        "%s",
                                                        msg);
             gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
-            gtk_dialog_run(GTK_DIALOG(dialog));
-            gtk_widget_destroy(dialog);
+//            gtk_dialog_run(GTK_DIALOG(dialog));
+//            gtk_widget_destroy(dialog);
+            g_signal_connect(dialog, "response",
+                             G_CALLBACK(trg_util_dialog_response_destroy_cb),
+                             NULL);
+            gtk_widget_show_all(dialog);
+*/
+            trg_util_error_message_dialog(GTK_WINDOW(win), msg);
             g_free(msg);
             trg_response_free(response);
             reset_connect_args(win);
@@ -1743,8 +1767,11 @@ static void open_about_cb(GtkWidget * w G_GNUC_UNUSED, GtkWindow * parent)
 {
     GtkWidget *aboutDialog = trg_about_window_new(parent);
 
-    gtk_dialog_run(GTK_DIALOG(aboutDialog));
-    gtk_widget_destroy(aboutDialog);
+//    gtk_dialog_run(GTK_DIALOG(aboutDialog));
+//    gtk_widget_destroy(aboutDialog);
+      g_signal_connect(GTK_DIALOG(aboutDialog), "response",
+                       G_CALLBACK(trg_util_dialog_response_destroy_cb), NULL);
+      gtk_widget_show_all(aboutDialog);
 }
 
 static gboolean
@@ -1851,15 +1878,31 @@ trg_dialog_error_handler(TrgMainWindow * win, trg_response * response)
         GtkWidget *dialog;
         const gchar *msg;
 
-        msg = make_error_message(response->obj, response->status);
+#if HAVE_LIBSECRET
+        if(priv->fetch_password_failed_flag) {
+            msg = g_strdup(_("Failed to fetch password from keychain"));
+            priv->fetch_password_failed_flag = FALSE;
+        }
+        else {
+            msg = make_error_message(response->obj, response->status);
+        }
+#else
         trg_status_bar_clear_indicators(priv->statusBar);
+#endif
         trg_status_bar_push_connection_msg(priv->statusBar, msg);
+/*
         dialog = gtk_message_dialog_new(GTK_WINDOW(win), GTK_DIALOG_MODAL,
                                         GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
                                         "%s", msg);
         gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
-        gtk_dialog_run(GTK_DIALOG(dialog));
-        gtk_widget_destroy(dialog);
+//        gtk_dialog_run(GTK_DIALOG(dialog));
+//        gtk_widget_destroy(dialog);
+        g_signal_connect(dialog, "response",
+                         G_CALLBACK(trg_util_dialog_response_destroy_cb),
+                         NULL);
+        gtk_widget_show_all(dialog);
+*/
+        trg_util_error_message_dialog(win, msg);
         g_free((gpointer) msg);
         return TRUE;
     } else {
@@ -2437,15 +2480,21 @@ static void exec_cmd_cb(GtkWidget * w, TrgMainWindow * win)
     g_free(cmd_line);
 
     if (cmd_error) {
+/*
         GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(win),
                                                    GTK_DIALOG_MODAL,
                                                    GTK_MESSAGE_ERROR,
                                                    GTK_BUTTONS_OK, "%s",
                                                    cmd_error->message);
         gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
-        gtk_dialog_run(GTK_DIALOG(dialog));
-        gtk_widget_destroy(dialog);
-        g_error_free(cmd_error);
+//        gtk_dialog_run(GTK_DIALOG(dialog));
+//        gtk_widget_destroy(dialog);
+        g_signal_connect(dialog, "response",
+                         G_CALLBACK(trg_util_dialog_response_destroy_cb), NULL);
+        gtk_widget_show_all(dialog);
+*/
+        trg_util_error_message_dialog(GTK_WINDOW(win), cmd_error->message);
+        g_clear_error(&cmd_error);
     }
 }
 
@@ -2672,6 +2721,27 @@ trg_client_session_updated_cb(TrgClient * tc,
 
     priv->queuesEnabled = queuesEnabled;
 }
+
+#if HAVE_LIBSECRET
+static void
+trg_client_fetch_password_cb(TrgClient * tc, TrgMainWindow * win)
+{
+    TrgMainWindowPrivate *priv = trg_main_window_get_instance_private(win);
+
+    /* NOTE: Can't show a dialog here. It will crash! */ 
+    trg_status_bar_push_connection_msg(priv->statusBar,
+                                       _("Fetching password..."));
+}
+
+static void
+trg_client_fetch_password_failed_cb(TrgClient * tc, TrgMainWindow * win)
+{
+    TrgMainWindowPrivate *priv = trg_main_window_get_instance_private(win);
+    /* Can't show a dialog here so set fetch_password_failed_flag which will */
+    /* cause the correct error to be displayed in trg_dialog_error_handler   */
+    priv->fetch_password_failed_flag = TRUE;
+}
+#endif
 
 /* Drag & Drop support */
 static GtkTargetEntry target_list[] = {
@@ -2930,6 +3000,14 @@ static GObject *trg_main_window_constructor(GType type,
 
     g_signal_connect(self, "drag-data-received",
                      G_CALLBACK(on_dropped_file), self);
+
+#ifdef HAVE_LIBSECRET
+    g_signal_connect(priv->client, "fetch-password",
+                     G_CALLBACK(trg_client_fetch_password_cb), self);
+    g_signal_connect(priv->client, "fetch-password-failed",
+                     G_CALLBACK(trg_client_fetch_password_failed_cb), self);
+    priv->fetch_password_failed_flag = FALSE;
+#endif
 
     return G_OBJECT(self);
 }

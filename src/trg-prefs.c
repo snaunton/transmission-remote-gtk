@@ -177,9 +177,37 @@ TrgPrefs *trg_prefs_new(void)
     return g_object_new(TRG_TYPE_PREFS, NULL);
 }
 
+#ifdef HAVE_LIBSECRET
+static void
+trg_prefs_profile_add_uuid_node(JsonObject *profile)
+{
+    JsonNode *node = json_node_new(JSON_NODE_VALUE);
+    gchar *uuid = g_uuid_string_random();
+    json_node_set_string (node, uuid);
+    g_free(uuid);
+    json_object_add_member(profile, TRG_PREFS_KEY_PROFILE_UUID, node);
+}
+
+static void
+trg_prefs_add_uuid_node_cb(JsonArray *array, guint index_, JsonNode *element_node, gpointer userdata)
+{
+    JsonObject *profile = json_node_get_object(element_node);
+
+    if(!json_object_has_member (profile, TRG_PREFS_KEY_PROFILE_UUID))
+        trg_prefs_profile_add_uuid_node(profile);
+}
+#endif
+
 static JsonObject *trg_prefs_new_profile_object(void)
 {
-    return json_object_new();
+#ifdef HAVE_LIBSECRET
+    /* Add uuid so we can key off it for secrets */
+    JsonObject *profile = json_object_new();
+    trg_prefs_profile_add_uuid_node(profile);
+    return profile;
+#else
+     return json_object_new();
+#endif
 }
 
 void trg_prefs_add_default_int(TrgPrefs * p, const gchar * key, int value)
@@ -219,6 +247,15 @@ gint trg_prefs_get_profile_id(TrgPrefs * p)
     return (gint) json_object_get_int_member(priv->userObj,
                                              TRG_PREFS_KEY_PROFILE_ID);
 }
+
+#ifdef HAVE_LIBSECRET
+const gchar *trg_prefs_get_profile_uuid(TrgPrefs * p)
+{
+    TrgPrefsPrivate *priv = p->priv;
+    return json_object_get_string_member(priv->profile,
+                                         TRG_PREFS_KEY_PROFILE_UUID);
+}
+#endif
 
 static JsonNode *trg_prefs_get_value_inner(JsonObject * obj,
                                            const gchar * key, int type,
@@ -571,6 +608,10 @@ void trg_prefs_load(TrgPrefs * p)
         priv->profile =
             json_array_get_object_element(profiles, profile_id);
     }
+#ifdef HAVE_LIBSECRET
+    /* Add uuid node to profiles if they do not already have one */
+    json_array_foreach_element(profiles, trg_prefs_add_uuid_node_cb, NULL);
+#endif
 }
 
 guint trg_prefs_get_add_flags(TrgPrefs * p)

@@ -30,6 +30,7 @@
 #include "trg-torrent-add-url-dialog.h"
 #include "hig.h"
 #include "requests.h"
+#include "util.h"
 
 G_DEFINE_TYPE(TrgTorrentAddUrlDialog, trg_torrent_add_url_dialog,
               GTK_TYPE_DIALOG)
@@ -60,17 +61,19 @@ static gboolean has_dht_support(TrgTorrentAddUrlDialog * dlg)
 
 static void show_dht_not_enabled_warning(TrgTorrentAddUrlDialog * dlg)
 {
-    gchar *msg =
-        _
-        ("You are trying to add a magnet torrent, but DHT is disabled. Distributed Hash Table (DHT) should be enabled in remote settings.");
-    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(dlg),
-                                               GTK_DIALOG_MODAL,
-                                               GTK_MESSAGE_WARNING,
-                                               GTK_BUTTONS_OK,
-                                               "%s", msg);
-    gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
-    gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
+//    gchar *msg =
+//        _
+//        ("You are trying to add a magnet torrent, but DHT is disabled. Distributed Hash Table (DHT) should be enabled in remote settings.");
+//    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(dlg),
+//                                               GTK_DIALOG_MODAL,
+//                                               GTK_MESSAGE_WARNING,
+//                                               GTK_BUTTONS_OK,
+//                                               "%s", msg);
+//    gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
+//    gtk_dialog_run(GTK_DIALOG(dialog));
+//    gtk_widget_destroy(dialog);
+    trg_util_warning_message_dialog(GTK_WINDOW(dlg), 
+        _("You are trying to add a magnet torrent, but DHT is disabled. Distributed Hash Table (DHT) should be enabled in remote settings."));
 }
 
 static void

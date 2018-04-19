@@ -111,7 +111,9 @@ static void
 hig_workarea_add_control (GtkWidget * t, guint row, GtkWidget * control)
 {
     gtk_widget_set_valign (control, GTK_ALIGN_CENTER);
-    gtk_widget_set_halign (control, GTK_ALIGN_START);
+    /* Below was GTK_ALIGN_START, but default behaviour for */
+    /* 1.3.1 is GTK_ALIGN_FILL                              */
+    gtk_widget_set_halign (control, GTK_ALIGN_FILL);
     gtk_widget_set_hexpand (control, TRUE);
     gtk_grid_attach (GTK_GRID (t), control, 1, row, 1, 1);
 }

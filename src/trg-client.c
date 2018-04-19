@@ -32,6 +32,10 @@
 #include <proxy.h>
 #endif
 
+#ifdef HAVE_LIBSECRET
+#include <libsecret/secret.h>
+#endif
+
 #include <curl/curl.h>
 #include <curl/easy.h>
 
@@ -41,6 +45,10 @@
 #include "util.h"
 #include "requests.h"
 #include "trg-client.h"
+
+#ifdef HAVE_LIBSECRET
+#include "trg-secret.h"
+#endif
 
 /* This class manages/does quite a few things, and is passed around a lot. It:
  *
@@ -59,10 +67,27 @@
 
 G_DEFINE_TYPE(TrgClient, trg_client, G_TYPE_OBJECT)
 enum {
-    TC_SESSION_UPDATED, TC_SIGNAL_COUNT
+    TC_SESSION_UPDATED,
+#ifdef HAVE_LIBSECRET
+    TC_FETCH_PASSWORD,
+    TC_FETCH_PASSWORD_FAILED,
+#endif
+    TC_SIGNAL_COUNT
 };
 
 static guint signals[TC_SIGNAL_COUNT] = { 0 };
+
+#if HAVE_LIBSECRET
+void trg_client_fetch_password_emit_signal(TrgClient * tc)
+{
+    g_signal_emit(tc, signals[TC_FETCH_PASSWORD], 0);
+}
+
+void trg_client_fetch_password_failed_emit_signal(TrgClient * tc)
+{
+    g_signal_emit(tc, signals[TC_FETCH_PASSWORD_FAILED], 0);
+}
+#endif
 
 struct _TrgClientPrivate {
     char *session_id;
@@ -142,6 +167,26 @@ static void trg_client_class_init(TrgClientClass * klass)
                                                g_cclosure_marshal_VOID__POINTER,
                                                G_TYPE_NONE, 1,
                                                G_TYPE_POINTER);
+
+#ifdef HAVE_LIBSECRET
+    signals[TC_FETCH_PASSWORD] =
+        g_signal_new("fetch-password",
+                     G_TYPE_FROM_CLASS(object_class),
+                     G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
+                     G_STRUCT_OFFSET(TrgClientClass,
+                                     fetch_password), NULL,
+                     NULL, g_cclosure_marshal_VOID__VOID, 
+                     G_TYPE_NONE, 0);
+
+    signals[TC_FETCH_PASSWORD_FAILED] =
+        g_signal_new("fetch-password-failed",
+                     G_TYPE_FROM_CLASS(object_class),
+                     G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
+                     G_STRUCT_OFFSET(TrgClientClass,
+                                     fetch_password_failed), NULL,
+                     NULL, g_cclosure_marshal_VOID__VOID, 
+                     G_TYPE_NONE, 0);
+#endif
 }
 
 static void trg_client_init(TrgClient * self)
@@ -517,6 +562,28 @@ static trg_tls *get_tls(TrgClient *tc) {
     return tls;
 }
 
+#ifdef HAVE_LIBSECRET
+static gchar*
+trg_fetch_password(TrgClient *tc)
+{
+    TrgClientPrivate *priv = tc->priv;
+    const gchar *profile_uuid = trg_prefs_get_profile_uuid(priv->prefs);
+    GError *error = NULL;
+
+    /* Inform anyone who wants to know that we are fetching password */
+    trg_client_fetch_password_emit_signal(tc);
+
+    gchar *password = trg_secret_get_password(profile_uuid, 3000, &error);
+
+    if(!password || error ) {
+       g_clear_error(&error);
+       trg_client_fetch_password_failed_emit_signal(tc);
+    }
+
+    return password;
+}
+#endif
+
 static CURL* get_curl(TrgClient *tc, guint http_class)
 {
 	TrgClientPrivate *priv = tc->priv;
@@ -543,8 +610,14 @@ static CURL* get_curl(TrgClient *tc, guint http_class)
         	curl_easy_setopt(curl, CURLOPT_WRITEHEADER, (void *) tc);
         	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &header_callback);
+#ifdef HAVE_LIBSECRET
+            gchar *password = trg_fetch_password(tc);
+            curl_easy_setopt(curl, CURLOPT_PASSWORD, password ? password : "");
+            secret_password_free(password);
+#else
             curl_easy_setopt(curl, CURLOPT_PASSWORD,
                              trg_client_get_password(tc));
+#endif
             curl_easy_setopt(curl, CURLOPT_USERNAME,
                              trg_client_get_username(tc));
             curl_easy_setopt(curl, CURLOPT_URL, trg_client_get_url(tc));
