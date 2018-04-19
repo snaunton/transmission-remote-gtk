@@ -588,7 +588,7 @@ static GtkWidget *trg_rprefs_connPage(TrgRemotePrefsDialog * win,
     hig_workarea_add_row(t, &row, _("Peer port"), w, w);
 
     priv->port_test_label = gtk_label_new(_("Port test"));
-    w = priv->port_test_button = gtk_button_new_with_label(_("_Test"));
+    w = priv->port_test_button = gtk_button_new_with_mnemonic(_("_Test"));
     g_signal_connect(w, "clicked", G_CALLBACK(port_test_cb), win);
     hig_workarea_add_row_w(t, &row, priv->port_test_label, w, NULL);
 
@@ -642,7 +642,7 @@ static GtkWidget *trg_rprefs_connPage(TrgRemotePrefsDialog * win,
     g_free((gchar *) stringValue);
 
     w = priv->blocklist_update_button =
-        gtk_button_new_with_label(_("_Update"));
+        gtk_button_new_with_mnemonic(_("_Update"));
     g_signal_connect(G_OBJECT(w), "clicked",
                      G_CALLBACK(update_blocklist_cb), win);
     hig_workarea_add_row_w(t, &row, tb, w, NULL);

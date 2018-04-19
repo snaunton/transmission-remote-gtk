@@ -107,10 +107,13 @@ static void trg_status_bar_init(TrgStatusBar * self)
 {
     TrgStatusBarPrivate *priv = TRG_STATUS_BAR_GET_PRIVATE(self);
     gtk_container_set_border_width(GTK_CONTAINER(self), 2);
+    gtk_grid_set_column_spacing(GTK_GRID(self), 12);
 
     priv->info_lbl = gtk_label_new(_("Disconnected"));
-    //gtk_box_pack_start(GTK_BOX(self), priv->info_lbl, FALSE, TRUE, 0);
+
     gtk_grid_attach(GTK_GRID(self), priv->info_lbl, 0, 0, 1, 1);
+    gtk_widget_set_halign (priv->info_lbl, GTK_ALIGN_START);
+    gtk_widget_set_hexpand (priv->info_lbl, TRUE);
 
     priv->turtleImage = gtk_image_new();
 
@@ -120,16 +123,14 @@ static void trg_status_bar_init(TrgStatusBar * self)
     gtk_widget_set_visible(priv->turtleEventBox, FALSE);
     gtk_container_add(GTK_CONTAINER(priv->turtleEventBox),
                       priv->turtleImage);
-    //gtk_box_pack_end(GTK_BOX(self), priv->turtleEventBox, FALSE, TRUE, 5);
+
     gtk_grid_attach(GTK_GRID(self), priv->turtleEventBox, 3, 0, 1, 1);
     gtk_widget_set_halign (priv->turtleEventBox, GTK_ALIGN_END);
 
     priv->speed_lbl = gtk_label_new(NULL);
-    //gtk_box_pack_end(GTK_BOX(self), priv->speed_lbl, FALSE, TRUE, 10);
     gtk_grid_attach(GTK_GRID(self), priv->speed_lbl, 2, 0, 1, 1);
 
     priv->free_lbl = gtk_label_new(NULL);
-    //gtk_box_pack_end(GTK_BOX(self), priv->free_lbl, FALSE, TRUE, 30);
     gtk_grid_attach(GTK_GRID(self), priv->free_lbl, 1, 0, 1, 1);
 }
 
