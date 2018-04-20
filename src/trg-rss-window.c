@@ -192,27 +192,25 @@ rss_item_activated(GtkTreeView * treeview,
 
 static void trg_rss_on_get_error(TrgRssModel *model, rss_get_error *error, gpointer data) {
 	GtkWindow *win = GTK_WINDOW(data);
-	gchar *msg;
+	gchar *msg = NULL;
 	if (error->error_code <= -100) {
 		msg = g_strdup_printf(_("Request failed with HTTP code %d"), -(error->error_code + 100));
 	} else {
 		msg = g_strdup(curl_easy_strerror(error->error_code));
 	}
-/*
-    GtkWidget *dialog = gtk_message_dialog_new(win,
-                                               GTK_DIALOG_MODAL,
-                                               GTK_MESSAGE_ERROR,
-                                               GTK_BUTTONS_OK,
-                                               "%s", msg);
-    g_free(msg);
-    gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
+//    GtkWidget *dialog = gtk_message_dialog_new(win,
+//                                               GTK_DIALOG_MODAL,
+//                                               GTK_MESSAGE_ERROR,
+//                                               GTK_BUTTONS_OK,
+//                                               "%s", msg);
+//    g_free(msg);
+//    gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
 //    gtk_dialog_run(GTK_DIALOG(dialog));
 //    gtk_widget_destroy(dialog);
-    g_signal_connect(dialog, "response",
-                     G_CALLBACK(trg_util_dialog_response_destroy_cb),
-                     NULL);
-    gtk_widget_show_all(dialog);
-*/
+//    g_signal_connect(dialog, "response",
+//                     G_CALLBACK(trg_util_dialog_response_destroy_cb),
+//                     NULL);
+//    gtk_widget_show_all(dialog);
    trg_util_error_message_dialog(win, msg);
    g_free(msg);
 }
@@ -220,22 +218,20 @@ static void trg_rss_on_get_error(TrgRssModel *model, rss_get_error *error, gpoin
 static void trg_rss_on_parse_error(TrgRssModel *model, rss_parse_error *error, gpointer data) {
 	GtkWindow *win = GTK_WINDOW(data);
 	gchar *msg = g_strdup_printf(_("Error parsing RSS feed \"%s\": %s"), error->feed_id, error->error->message);
-/*
-    GtkWidget *dialog = gtk_message_dialog_new(win,
-                                               GTK_DIALOG_MODAL,
-                                               GTK_MESSAGE_ERROR,
-                                               GTK_BUTTONS_OK,
-                                               "%s", msg);
-    g_free(msg);
-    gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
+
+//    GtkWidget *dialog = gtk_message_dialog_new(win,
+//                                               GTK_DIALOG_MODAL,
+//                                               GTK_MESSAGE_ERROR,
+//                                               GTK_BUTTONS_OK,
+//                                               "%s", msg);
+//    g_free(msg);
+//    gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
 //    gtk_dialog_run(GTK_DIALOG(dialog));
 //    gtk_widget_destroy(dialog);
-    g_signal_connect(dialog, "response",
-                     G_CALLBACK(trg_util_dialog_response_destroy_cb),
-                     NULL);
-    gtk_widget_show_all(dialog);
-*/
-
+//    g_signal_connect(dialog, "response",
+//                     G_CALLBACK(trg_util_dialog_response_destroy_cb),
+//                     NULL);
+//    gtk_widget_show_all(dialog);
    trg_util_error_message_dialog(win, msg);
    g_free(msg);
 }
@@ -307,16 +303,14 @@ static GObject *trg_rss_window_constructor(GType type,
     gtk_tool_item_set_tooltip_text(item, "Configure Feeds");
     g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(on_configure), object);
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), item, 0);
-/*
-    vbox = trg_vbox_new(FALSE, 0);
 
-    gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(toolbar),
-                           FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), my_scrolledwin_new(GTK_WIDGET(priv->tree_view)),
-                           TRUE, TRUE, 0);
+//    vbox = trg_vbox_new(FALSE, 0);
+//    gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(toolbar),
+//                           FALSE, FALSE, 0);
+//    gtk_box_pack_start(GTK_BOX(vbox), my_scrolledwin_new(GTK_WIDGET(priv->tree_view)),
+//                           TRUE, TRUE, 0);
+//    gtk_container_add(GTK_CONTAINER(object), vbox);
 
-    gtk_container_add(GTK_CONTAINER(object), vbox);
-*/
     GtkWidget *grid = gtk_grid_new();
     gtk_widget_set_hexpand (GTK_WIDGET(toolbar), TRUE);
     gtk_grid_attach (GTK_GRID(grid), GTK_WIDGET(toolbar), 0, 0, 1, 1);
@@ -325,6 +319,7 @@ static GObject *trg_rss_window_constructor(GType type,
     gtk_widget_set_vexpand (w, TRUE);
     gtk_grid_attach (GTK_GRID(grid), w, 0, 1, 1, 1);
 
+    /* snaunton: Already commented out */
     /*g_signal_connect(object, "response",
                      G_CALLBACK(trg_rss_window_response_cb), NULL);*/
 

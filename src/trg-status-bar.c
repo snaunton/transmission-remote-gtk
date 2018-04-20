@@ -34,7 +34,7 @@
 #include "json.h"
 #include "util.h"
 
-/* A subclass of GtkHBox which contains a status label on the left.
+/* A subclass of GtkGrid which contains a status label on the left.
  * Free space indicator on left-right.
  * Speed (including limits if in use) label on right-right.
  *

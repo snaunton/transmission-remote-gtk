@@ -37,6 +37,10 @@
 #define TR_RATIO_NA  -1
 #define TR_RATIO_INF -2
 
+#define trg_util_error_message_dialog(p,m) trg_util_message_dialog(p,_("Error"),m,GTK_MESSAGE_ERROR)
+#define trg_util_warning_message_dialog(p,m) trg_util_message_dialog(p,_("Warning"),m,GTK_MESSAGE_WARNING)
+#define trg_util_info_message_dialog(p,m) trg_util_message_dialog(p,_("Warning"),m,GTK_MESSAGE_INFO)
+
 extern const int disk_K;
 extern const char *disk_K_str;
 extern const char *disk_M_str;
@@ -91,8 +95,8 @@ GtkWidget *gtr_combo_box_new_enum(const char *text_1, ...);
 
 gboolean should_be_minimised(int argc, char *argv[]);
 gboolean is_minimised_arg(const gchar * arg);
-GtkWidget *trg_vbox_new(gboolean homogeneous, gint spacing);
-GtkWidget *trg_hbox_new(gboolean homogeneous, gint spacing);
+//GtkWidget *trg_vbox_new(gboolean homogeneous, gint spacing);
+//GtkWidget *trg_hbox_new(gboolean homogeneous, gint spacing);
 gboolean is_unity(void);
 void trg_util_dialog_response_destroy_cb(GtkDialog *dlg,
                                          gint response_id G_GNUC_UNUSED,
@@ -101,10 +105,6 @@ void trg_util_message_dialog(GtkWindow *parent,
                              const gchar *title, 
                              const gchar *message,
                              GtkMessageType type);
-
-#define trg_util_error_message_dialog(p,m) trg_util_message_dialog(p,_("Error"),m,GTK_MESSAGE_ERROR)
-#define trg_util_warning_message_dialog(p,m) trg_util_message_dialog(p,_("Warning"),m,GTK_MESSAGE_WARNING)
-#define trg_util_info_message_dialog(p,m) trg_util_message_dialog(p,_("Warning"),m,GTK_MESSAGE_INFO)
 
 void trg_util_confirm_dialog (GtkWindow *parent,
                               const gchar *title,

@@ -571,20 +571,9 @@ static void
 password_del_cb(GObject *source, GAsyncResult *result, gpointer userdata)
 {
     GtkWidget *win = gtk_widget_get_toplevel(GTK_WIDGET(userdata));
-
+    /* Note that secret_password_clear_finish does not return a GError */
+    /* if the password is not found, so don't bother checking          */
     if(!secret_password_clear_finish (result, NULL)) {
-/*
-        GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(win),
-                                                   GTK_DIALOG_MODAL,
-                                                   GTK_MESSAGE_ERROR,
-                                                   GTK_BUTTONS_OK,
-                                                   "%s", _("Failed to delete password from keychain"));
-
-        gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
-        g_signal_connect(dialog, "response",
-                         G_CALLBACK(trg_util_dialog_response_destroy_cb), NULL);
-        gtk_widget_show_all(dialog);
-*/
         trg_util_error_message_dialog(GTK_WINDOW(win),
                                       _("Failed to delete password from keychain"));
     }
@@ -642,21 +631,9 @@ password_set_cb(GObject *source, GAsyncResult *result, gpointer userdata)
     GtkWidget *win = gtk_widget_get_toplevel(GTK_WIDGET(userdata));
 
     if(!secret_password_store_finish (result, NULL)) {
-//        GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(win),
-//                                                   GTK_DIALOG_MODAL,
-//                                                   GTK_MESSAGE_ERROR,
-//                                                   GTK_BUTTONS_OK,
-//                                                   "%s", _("Failed to save password to keychain"));
-//
-//        gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
-//        g_signal_connect(dialog, "response",
-//                         G_CALLBACK(trg_util_dialog_response_destroy_cb), NULL);
-//        gtk_widget_show_all(dialog);
         trg_util_error_message_dialog(GTK_WINDOW(win),
                                       _("Failed to save password to keychain"));
     }
-
-
 }
 
 static void
@@ -935,7 +912,7 @@ static GtkWidget *trg_prefs_serverPage(TrgPreferencesDialog * dlg)
         TRG_PREFERENCES_DIALOG_GET_PRIVATE(dlg);
     TrgPrefs *prefs = priv->prefs;
 
-    GtkWidget *w, *t, *frame, *frameHbox, *profileLabel;
+    GtkWidget *w, *t, *profileLabel;
     guint row = 0;
 
     t = hig_workarea_create();
@@ -1043,12 +1020,16 @@ static GtkWidget *trg_prefs_serverPage(TrgPreferencesDialog * dlg)
                       TRG_PREFS_PROFILE, NULL);
     hig_workarea_add_row(t, &row, _("Retries:"), w, NULL);
 
-    frame = gtk_frame_new(NULL);
-    frameHbox = trg_hbox_new(FALSE, 2);
-    gtk_box_pack_start(GTK_BOX(frameHbox), profileLabel, FALSE, FALSE, 2);
-    gtk_box_pack_start(GTK_BOX(frameHbox), priv->profileComboBox, FALSE,
-                       FALSE, 4);
-    gtk_frame_set_label_widget(GTK_FRAME(frame), frameHbox);
+    GtkWidget *frame = gtk_frame_new(NULL);
+    GtkWidget *frame_grid = gtk_grid_new();
+    gtk_grid_attach(GTK_GRID(frame_grid), profileLabel, 0, 0, 1, 1);
+   	gtk_widget_set_margin_start(profileLabel, 2);
+   	gtk_widget_set_margin_end(profileLabel, 2);
+    gtk_grid_attach(GTK_GRID(frame_grid), priv->profileComboBox, 1, 0, 1, 1);
+   	gtk_widget_set_margin_start(priv->profileComboBox, 4);
+   	gtk_widget_set_margin_end(priv->profileComboBox, 4);
+
+    gtk_frame_set_label_widget(GTK_FRAME(frame), frame_grid);
     gtk_container_set_border_width(GTK_CONTAINER(frame), 5);
     gtk_container_add(GTK_CONTAINER(frame), t);
 

@@ -29,12 +29,12 @@
 #include "util.h"
 
 /* A config TreeView which can save/restore simple data into the TrgConf backend.
- * It's not actually a GtkTreeView, it's a GtKVBox which contains the buttons
+ * It's not actually a GtkTreeView, it's a GtkGrid which contains the buttons
  * to add/remove entries as well as the TreeView.
  */
 
 G_DEFINE_TYPE(TrgPersistentTreeView, trg_persistent_tree_view,
-              GTK_TYPE_GRID) //GTK_TYPE_VBOX)
+              GTK_TYPE_GRID)
 #define GET_PRIVATE(o) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((o), TRG_TYPE_PERSISTENT_TREE_VIEW, TrgPersistentTreeViewPrivate))
 typedef struct _TrgPersistentTreeViewPrivate

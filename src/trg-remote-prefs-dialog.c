@@ -226,7 +226,8 @@ static GtkWidget *trg_rprefs_time_widget_new(GList ** wl, JsonObject * obj,
                                              const gchar * key,
                                              GtkWidget * alt_time_check)
 {
-    GtkWidget *hbox = trg_hbox_new(FALSE, 0);
+    //GtkWidget *hbox = trg_hbox_new(FALSE, 0);
+    GtkWidget *grid = gtk_grid_new();
     GtkWidget *colonLabel = gtk_label_new(":");
     GtkWidget *hourSpin =
         trg_rprefs_timer_widget_spin_new(23, alt_time_check);
@@ -236,31 +237,43 @@ static GtkWidget *trg_rprefs_time_widget_new(GList ** wl, JsonObject * obj,
 
     trg_json_widget_desc *wd = g_new0(trg_json_widget_desc, 1);
     wd->key = g_strdup(key);
-    wd->widget = hbox;
+//    wd->widget = hbox;
+    wd->widget = grid;
     wd->saveFunc = trg_rprefs_time_widget_savefunc;
 
-    g_object_set_data(G_OBJECT(hbox), "hours-spin", hourSpin);
-    g_object_set_data(G_OBJECT(hbox), "mins-spin", minutesSpin);
+//    g_object_set_data(G_OBJECT(hbox), "hours-spin", hourSpin);
+//    g_object_set_data(G_OBJECT(hbox), "mins-spin", minutesSpin);
+    g_object_set_data(G_OBJECT(grid), "hours-spin", hourSpin);
+    g_object_set_data(G_OBJECT(grid), "mins-spin", minutesSpin);
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(hourSpin),
                               floor((gdouble) value / 60.0));
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(minutesSpin),
                               (gdouble) (value % 60));
 
-    gtk_box_pack_start(GTK_BOX(hbox), hourSpin, TRUE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), colonLabel, TRUE, FALSE, 2);
-    gtk_box_pack_start(GTK_BOX(hbox), minutesSpin, TRUE, FALSE, 0);
-
+//    gtk_box_pack_start(GTK_BOX(hbox), hourSpin, TRUE, FALSE, 0);
+//    gtk_box_pack_start(GTK_BOX(hbox), colonLabel, TRUE, FALSE, 2);
+//    gtk_box_pack_start(GTK_BOX(hbox), minutesSpin, TRUE, FALSE, 0);
+    gtk_grid_attach(GTK_GRID(grid), hourSpin, 0, 0, 1, 1);
+    gtk_widget_set_hexpand (hourSpin, TRUE);
+    gtk_widget_set_hexpand (colonLabel, TRUE);
+    gtk_grid_attach(GTK_GRID(grid), colonLabel, 1, 0, 1, 1);
+    gtk_widget_set_margin_start (colonLabel, 2);
+    gtk_widget_set_margin_end (colonLabel, 2);
+    gtk_grid_attach(GTK_GRID(grid), minutesSpin, 2, 0, 1, 1);
+    gtk_widget_set_hexpand (minutesSpin, TRUE);
     *wl = g_list_append(*wl, wd);
 
-    return hbox;
+//    return hbox;
+    return grid;
 }
 
 static GtkWidget *trg_rprefs_time_begin_end_new(GList ** wl,
                                                 JsonObject * obj,
                                                 GtkWidget * alt_time_check)
 {
-    GtkWidget *hbox = trg_hbox_new(FALSE, 0);
+//    GtkWidget *hbox = trg_hbox_new(FALSE, 0);
+    GtkWidget *grid = gtk_grid_new ();
     GtkWidget *begin = trg_rprefs_time_widget_new(wl, obj,
                                                   SGET_ALT_SPEED_TIME_BEGIN,
                                                   alt_time_check);
@@ -268,12 +281,20 @@ static GtkWidget *trg_rprefs_time_begin_end_new(GList ** wl,
                                                 SGET_ALT_SPEED_TIME_END,
                                                 alt_time_check);
 
-    gtk_box_pack_start(GTK_BOX(hbox), begin, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), gtk_label_new("-"), FALSE, FALSE,
-                       10);
-    gtk_box_pack_start(GTK_BOX(hbox), end, FALSE, FALSE, 0);
+//    gtk_box_pack_start(GTK_BOX(hbox), begin, FALSE, FALSE, 0);
+//    gtk_box_pack_start(GTK_BOX(hbox), gtk_label_new("-"), FALSE, FALSE,
+//                       10);
+//    gtk_box_pack_start(GTK_BOX(hbox), end, FALSE, FALSE, 0);
 
-    return hbox;
+//    return hbox;
+    GtkWidget *w = gtk_label_new("-");
+    gtk_grid_attach (GTK_GRID(grid), begin, 0, 0, 1, 1);
+    gtk_grid_attach (GTK_GRID(grid), w, 1, 0, 1, 1);
+    gtk_widget_set_margin_start (w, 10);
+    gtk_widget_set_margin_end (w, 10);
+    gtk_grid_attach (GTK_GRID(grid), end, 2, 0, 1, 1);
+
+    return grid;
 }
 
 static GtkWidget *trg_rprefs_alt_speed_spin_new(GList ** wl,

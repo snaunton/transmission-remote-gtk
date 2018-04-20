@@ -551,22 +551,22 @@ gboolean should_be_minimised(int argc, char *argv[])
     return FALSE;
 }
 
-GtkWidget *trg_hbox_new(gboolean homogeneous, gint spacing)
-{
-    GtkWidget *box;
-    box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, spacing);
-    gtk_box_set_homogeneous(GTK_BOX(box), homogeneous);
-    return box;
-}
-/* dugong
-GtkWidget *trg_vbox_new(gboolean homogeneous, gint spacing)
-{
-    GtkWidget *box;
-    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, spacing);
-    gtk_box_set_homogeneous(GTK_BOX(box), homogeneous);
-    return box;
-}
-*/
+//GtkWidget *trg_hbox_new(gboolean homogeneous, gint spacing)
+//{
+//    GtkWidget *box;
+//    box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, spacing);
+//    gtk_box_set_homogeneous(GTK_BOX(box), homogeneous);
+//    return box;
+//}
+
+//GtkWidget *trg_vbox_new(gboolean homogeneous, gint spacing)
+//{
+//    GtkWidget *box;
+//    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, spacing);
+//    gtk_box_set_homogeneous(GTK_BOX(box), homogeneous);
+//    return box;
+//}
+
 #ifdef WIN32
 gchar *trg_win32_support_path(gchar * file)
 {
