@@ -310,12 +310,30 @@ static void getStatusString(GString * gstr, TorrentCellRenderer * r)
     char buf[256];
 
     if (priv->error) {
+/*
         const char *fmt[] = { NULL, N_("Tracker gave a warning: \"%s\""),
             N_("Tracker gave an error: \"%s\""),
             N_("Error: %s")
         };
         g_string_append_printf(gstr, _(fmt[priv->error]),
                                torrent_get_errorstr(priv->json));
+*/
+        /* Addresses "warning: format not a string literal, argument types */
+        /* not checked" without affecting translations. Totally unsexy.    */
+        switch(priv->error) {
+            case 1:
+               g_string_append_printf(gstr, _("Tracker gave a warning: \"%s\""),
+                                      torrent_get_errorstr(priv->json));
+               break;
+            case 2:
+               g_string_append_printf(gstr, _("Tracker gave an error: \"%s\""),
+                                      torrent_get_errorstr(priv->json));
+               break;
+            case 3:
+               g_string_append_printf(gstr, _("Error: %s"),
+                                      torrent_get_errorstr(priv->json));
+               break;
+        }
     } else if ((priv->flags & TORRENT_FLAG_PAUSED)
                || (priv->flags & TORRENT_FLAG_WAITING_CHECK)
                || (priv->flags & TORRENT_FLAG_CHECKING)

@@ -603,9 +603,42 @@ trg_util_message_dialog(GtkWindow *parent,
                                                GTK_BUTTONS_OK,
                                                "%s", message);
 
-    gtk_window_set_title(GTK_WINDOW(dialog), title);
+    if(title)
+        gtk_window_set_title(GTK_WINDOW(dialog), title);
     g_signal_connect(dialog, "response",
                      G_CALLBACK(trg_util_dialog_response_destroy_cb),
                      NULL);
     gtk_widget_show_all(dialog);
+}
+
+void 
+trg_util_confirm_dialog (GtkWindow *parent,
+                         const gchar *title,
+                         const gchar *message,
+                         const gchar *accept,
+                         GCallback cb,
+                         gpointer cb_data)
+{
+    GtkWidget *dialog =
+        gtk_message_dialog_new_with_markup (parent,
+                                            GTK_DIALOG_DESTROY_WITH_PARENT,
+                                            GTK_MESSAGE_QUESTION,
+                                            GTK_BUTTONS_NONE,
+                                            "%s", message);
+
+    if (title)
+        gtk_window_set_title (GTK_WINDOW(dialog), title);
+
+    gtk_dialog_add_buttons (GTK_DIALOG(dialog),
+                            accept, GTK_RESPONSE_ACCEPT,
+                            _("_Cancel"), GTK_RESPONSE_CANCEL,
+                            NULL);
+
+    gtk_dialog_set_default_response(GTK_DIALOG(dialog),
+                                    GTK_RESPONSE_CANCEL);
+
+    g_signal_connect (dialog, "response",
+                      G_CALLBACK(cb), cb_data);
+
+    gtk_widget_show_all (dialog);
 }

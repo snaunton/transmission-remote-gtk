@@ -150,11 +150,6 @@ static void pause_all_cb(GtkWidget * w, TrgMainWindow * win);
 static void move_cb(GtkWidget * w, TrgMainWindow * win);
 static void delete_cb(GtkWidget * w, TrgMainWindow * win);
 static void open_props_cb(GtkWidget * w, TrgMainWindow * win);
-static gint confirm_action_dialog(GtkWindow * gtk_win,
-                                  GtkTreeSelection * selection,
-                                  const gchar * question_single,
-                                  const gchar * question_multi,
-                                  const gchar * action_stock);
 static void view_stats_toggled_cb(GtkWidget * w, gpointer data);
 static void view_states_toggled_cb(GtkCheckMenuItem * w,
                                    TrgMainWindow * win);
@@ -603,7 +598,6 @@ void connect_cb(GtkWidget * w, gpointer data)
     TrgPrefs *prefs = trg_client_get_prefs(priv->client);
     JsonObject *currentProfile = trg_prefs_get_profile(prefs);
     JsonObject *profile = NULL;
-    GtkWidget *dialog;
     int populate_result;
 
     if (w)
@@ -833,69 +827,6 @@ static void down_queue_cb(GtkWidget * w G_GNUC_UNUSED, TrgMainWindow * win)
                        on_generic_interactive_action_response, win);
 }
 
-static gint
-confirm_action_dialog(GtkWindow * gtk_win,
-                      GtkTreeSelection * selection,
-                      const gchar * question_single,
-                      const gchar * question_multi,
-                      const gchar * action)
-{
-    TrgMainWindow *win = TRG_MAIN_WINDOW(gtk_win);
-    TrgMainWindowPrivate *priv = trg_main_window_get_instance_private(win);
-    gint selectCount;
-    gint response;
-    GtkWidget *dialog = NULL;
-
-    selectCount = gtk_tree_selection_count_selected_rows(selection);
-
-    if (selectCount == 1) {
-        GList *list;
-        GList *firstNode;
-        GtkTreeIter firstIter;
-        gchar *name = NULL;
-
-        list = gtk_tree_selection_get_selected_rows(selection, NULL);
-        firstNode = g_list_first(list);
-
-        gtk_tree_model_get_iter(GTK_TREE_MODEL
-                                (priv->filteredTorrentModel), &firstIter,
-                                firstNode->data);
-        gtk_tree_model_get(GTK_TREE_MODEL(priv->filteredTorrentModel),
-                           &firstIter, TORRENT_COLUMN_NAME, &name, -1);
-        g_list_foreach(list, (GFunc) gtk_tree_path_free, NULL);
-        g_list_free(list);
-
-        dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(win),
-                                                    GTK_DIALOG_DESTROY_WITH_PARENT,
-                                                    GTK_MESSAGE_QUESTION,
-                                                    GTK_BUTTONS_NONE,
-                                                    question_single, name);
-        g_free(name);
-    } else if (selectCount > 1) {
-        dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(win),
-                                                    GTK_DIALOG_DESTROY_WITH_PARENT,
-                                                    GTK_MESSAGE_QUESTION,
-                                                    GTK_BUTTONS_NONE,
-                                                    question_multi,
-                                                    selectCount);
-
-    } else {
-        return 0;
-    }
-
-    gtk_dialog_add_buttons(GTK_DIALOG(dialog),
-                           action, GTK_RESPONSE_ACCEPT,
-                           _("_Cancel"), GTK_RESPONSE_CANCEL,
-                           NULL);
-
-    gtk_dialog_set_default_response(GTK_DIALOG(dialog),
-                                    GTK_RESPONSE_CANCEL);
-
-    response = gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
-    return response;
-}
-
 static gboolean is_ready_for_torrent_action(TrgMainWindow * win)
 {
     TrgMainWindowPrivate *priv = trg_main_window_get_instance_private(win);
@@ -913,51 +844,118 @@ static void move_cb(GtkWidget * w G_GNUC_UNUSED, TrgMainWindow * win)
                              (win, priv->client, priv->torrentTreeView)));
 }
 
-static void remove_cb(GtkWidget * w G_GNUC_UNUSED, TrgMainWindow * win)
+static gchar *
+trg_torrent_list_selection_get_name (GtkTreeSelection *selection,
+                                     TrgMainWindow *win)
 {
     TrgMainWindowPrivate *priv = trg_main_window_get_instance_private(win);
-    GtkTreeSelection *selection;
-    JsonArray *ids;
+    GtkTreeIter firstIter;
+    gchar *name = NULL;
 
-    if (!is_ready_for_torrent_action(win))
-        return;
+    GList *list = gtk_tree_selection_get_selected_rows(selection, NULL);
+    GList *firstNode = g_list_first(list);
 
-    selection =
-        gtk_tree_view_get_selection(GTK_TREE_VIEW(priv->torrentTreeView));
-    ids = build_json_id_array(priv->torrentTreeView);
+    gtk_tree_model_get_iter(GTK_TREE_MODEL
+                            (priv->filteredTorrentModel), &firstIter,
+                            firstNode->data);
+    gtk_tree_model_get(GTK_TREE_MODEL(priv->filteredTorrentModel),
+                       &firstIter, TORRENT_COLUMN_NAME, &name, -1);
+    g_list_foreach(list, (GFunc) gtk_tree_path_free, NULL);
+    g_list_free(list);
 
-    if (confirm_action_dialog(GTK_WINDOW(win), selection, _
-                              ("<big><b>Remove torrent \"%s\"?</b></big>"),
-                              _("<big><b>Remove %d torrents?</b></big>"),
-                              _("_Remove")) == GTK_RESPONSE_ACCEPT)
-        dispatch_async(priv->client, torrent_remove(ids, FALSE),
-                       on_generic_interactive_action_response, win);
-    else
-        json_array_unref(ids);
+    return name;
 }
 
-static void delete_cb(GtkWidget * w G_GNUC_UNUSED, TrgMainWindow * win)
+static void
+remove_confirm_cb(GtkDialog *dlg, gint response_id, gpointer data)
 {
-    TrgMainWindowPrivate *priv = trg_main_window_get_instance_private(win);
-    GtkTreeSelection *selection;
-    JsonArray *ids;
+    gtk_widget_destroy(GTK_WIDGET(dlg));
 
-    selection =
-        gtk_tree_view_get_selection(GTK_TREE_VIEW(priv->torrentTreeView));
-    ids = build_json_id_array(priv->torrentTreeView);
+    if(response_id != GTK_RESPONSE_ACCEPT)
+        return;
 
+    TrgMainWindow *win = (TrgMainWindow*)data;
+    TrgMainWindowPrivate *priv =
+        trg_main_window_get_instance_private(win);
+  
+    JsonArray *ids = build_json_id_array(priv->torrentTreeView);
+
+    dispatch_async(priv->client, torrent_remove(ids, FALSE),
+                   on_generic_interactive_action_response, win);
+}
+
+static void 
+remove_cb(GtkWidget *w G_GNUC_UNUSED, TrgMainWindow *win)
+{
     if (!is_ready_for_torrent_action(win))
         return;
 
-    if (confirm_action_dialog(GTK_WINDOW(win), selection, _
-                              ("<big><b>Remove and delete torrent \"%s\"?</b></big>"),
-                              _
-                              ("<big><b>Remove and delete %d torrents?</b></big>"),
-                              _("_Delete")) == GTK_RESPONSE_ACCEPT)
-        dispatch_async(priv->client, torrent_remove(ids, TRUE),
-                       on_delete_complete, win);
-    else
-        json_array_unref(ids);
+    TrgMainWindowPrivate *priv = trg_main_window_get_instance_private(win);
+    gchar *msg = NULL;
+    GtkTreeSelection *selection =
+        gtk_tree_view_get_selection(GTK_TREE_VIEW(priv->torrentTreeView));
+    gint selection_count = gtk_tree_selection_count_selected_rows(selection);
+
+    if (selection_count == 1) {
+        gchar *name =
+            trg_torrent_list_selection_get_name(selection, win);
+        msg = g_strdup_printf(_("<big><b>Remove torrent \"%s\"?</b></big>"),
+                              name);
+        g_free(name);
+
+    } else if(selection_count > 1) {
+        msg = g_strdup_printf(_("<big><b>Remove %d torrents?</b></big>"),
+                              selection_count);
+    }
+
+    trg_util_confirm_dialog(GTK_WINDOW(win), NULL, msg, _("_Remove"),
+                            G_CALLBACK(remove_confirm_cb), win);
+}
+
+static void
+delete_confirm_cb(GtkDialog *dlg, gint response_id, gpointer data)
+{
+    gtk_widget_destroy(GTK_WIDGET(dlg));
+
+    if(response_id != GTK_RESPONSE_ACCEPT)
+        return;
+
+    TrgMainWindow *win = (TrgMainWindow*)data;
+    TrgMainWindowPrivate *priv =
+        trg_main_window_get_instance_private(win);
+  
+    JsonArray *ids = build_json_id_array(priv->torrentTreeView);
+
+    dispatch_async(priv->client, torrent_remove(ids, TRUE),
+                   on_delete_complete, win);
+}
+
+static void
+delete_cb(GtkWidget *w G_GNUC_UNUSED, TrgMainWindow *win)
+{
+    if (!is_ready_for_torrent_action(win))
+        return;
+
+    TrgMainWindowPrivate *priv = trg_main_window_get_instance_private(win);
+    gchar *msg = NULL;
+    GtkTreeSelection *selection =
+        gtk_tree_view_get_selection(GTK_TREE_VIEW(priv->torrentTreeView));
+    gint selection_count = gtk_tree_selection_count_selected_rows(selection);
+
+    if (selection_count == 1) {
+        gchar *name =
+            trg_torrent_list_selection_get_name(selection, win);
+        msg = g_strdup_printf(_("<big><b>Remove and delete torrent \"%s\"?</b></big>"),
+                              name);
+        g_free(name);
+
+    } else if(selection_count > 1) {
+        msg = g_strdup_printf(_("<big><b>Remove and delete %d torrents?</b></big>"),
+                              selection_count);
+    }
+
+    trg_util_confirm_dialog(GTK_WINDOW(win), NULL, msg, _("_Delete"),
+                            G_CALLBACK(delete_confirm_cb), win);
 }
 
 static void view_stats_toggled_cb(GtkWidget * w, gpointer data)
@@ -1875,7 +1873,6 @@ trg_dialog_error_handler(TrgMainWindow * win, trg_response * response)
     TrgMainWindowPrivate *priv = trg_main_window_get_instance_private(win);
 
     if (response->status != CURLE_OK) {
-        GtkWidget *dialog;
         const gchar *msg;
 
 #if HAVE_LIBSECRET
@@ -1902,7 +1899,7 @@ trg_dialog_error_handler(TrgMainWindow * win, trg_response * response)
                          NULL);
         gtk_widget_show_all(dialog);
 */
-        trg_util_error_message_dialog(win, msg);
+        trg_util_error_message_dialog(GTK_WINDOW(win), msg);
         g_free((gpointer) msg);
         return TRUE;
     } else {

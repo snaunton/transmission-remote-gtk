@@ -101,9 +101,17 @@ void trg_util_message_dialog(GtkWindow *parent,
                              const gchar *title, 
                              const gchar *message,
                              GtkMessageType type);
+
 #define trg_util_error_message_dialog(p,m) trg_util_message_dialog(p,_("Error"),m,GTK_MESSAGE_ERROR)
 #define trg_util_warning_message_dialog(p,m) trg_util_message_dialog(p,_("Warning"),m,GTK_MESSAGE_WARNING)
 #define trg_util_info_message_dialog(p,m) trg_util_message_dialog(p,_("Warning"),m,GTK_MESSAGE_INFO)
+
+void trg_util_confirm_dialog (GtkWindow *parent,
+                              const gchar *title,
+                              const gchar *message,
+                              const gchar *accept,
+                              GCallback cb,
+                              gpointer cb_data);
 
 #ifdef WIN32
 gchar *trg_win32_support_path(gchar * file);

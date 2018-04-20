@@ -574,6 +574,9 @@ static GtkWidget *trg_torrent_add_dialog_generic(GtkWindow * parent,
                                                _("_Add"), GTK_RESPONSE_ACCEPT,
                                                _("_Cancel"), GTK_RESPONSE_CANCEL,
                                                NULL);
+
+    gtk_window_set_modal (GTK_WINDOW(w), FALSE);
+
     gchar *dir =
         trg_prefs_get_string(prefs, TRG_PREFS_KEY_LAST_TORRENT_DIR,
                              TRG_PREFS_GLOBAL);
