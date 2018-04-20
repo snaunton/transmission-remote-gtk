@@ -97,7 +97,7 @@ static void connchange_whatever_statusicon(TrgMainWindow * win,
 static void update_whatever_statusicon(TrgMainWindow * win,
                                        trg_torrent_model_update_stats *
                                        stats);
-#ifdef HAVE LIBAPPINDICATOR
+#ifdef HAVE_LIBAPPINDICATOR
 static GtkMenu *trg_appindicator_menu(TrgMainWindow * win,
                                       const gchar * msg);
 
